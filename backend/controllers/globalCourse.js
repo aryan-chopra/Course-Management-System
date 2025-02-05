@@ -18,7 +18,7 @@ GlobalCourse.createGlobalCourse = async (req, res, next) => {
         await globalCourse.save()
 
         console.log("Course created")
-        res.status(StatusCodes.OK).json({status: "OK"})
+        res.status(StatusCodes.OK).json({ status: "OK" })
     } catch (error) {
         next(error)
     }
@@ -27,15 +27,15 @@ GlobalCourse.createGlobalCourse = async (req, res, next) => {
 GlobalCourse.readGlobalCourse = async (req, res, next) => {
     try {
         const courseID = req.params.id
-    
-        const course = await GlobalCourse.findOne({globalCourseID: courseID})
+
+        const course = await GlobalCourse.findOne({ globalCourseID: courseID })
 
         if (course == null) {
             throw new InvalidIdException("course")
         }
 
         console.log(course)
-        res.status(StatusCodes.OK).json({course: course})
+        res.status(StatusCodes.OK).json({ course: course })
     } catch (error) {
         next(error)
     }
@@ -43,18 +43,20 @@ GlobalCourse.readGlobalCourse = async (req, res, next) => {
 
 GlobalCourse.updateGlobalCourse = async (req, res, next) => {
     try {
-        const courseId = {globalCourseID: req.params.id}
-        const course = await GlobalCourse.findOne(courseId)
-        if (course == null) {
-            throw new InvalidIdException("course")
-        }
-        
+        const courseId = { globalCourseID: req.params.id }
         const update = req.body
 
-        const updatedCourse = await GlobalCourse.updateOne(courseId, update)
+        const updatedDocument = await GlobalCourse.findOneAndUpdate(courseId, update, {
+            runValidators: true,
+            returnDocument: 'after'
+        })
 
-        console.log(updatedCourse)
-        res.status(StatusCodes.OK).json({course: updatedCourse})
+        if (updatedDocument == null) {
+            throw new InvalidIdException("course")
+        }
+
+        console.log(updatedDocument)
+        res.status(StatusCodes.OK).json({ course: updatedDocument })
     } catch (error) {
         next(error)
     }
@@ -62,14 +64,15 @@ GlobalCourse.updateGlobalCourse = async (req, res, next) => {
 
 GlobalCourse.deleteGlobalCourse = async (req, res, next) => {
     try {
-        const courseID = {globalCourseID: req.params.id}
-        const course = await GlobalCourse.findOne(courseID)
+        console.log("Deleting " + req.params.id)
+        const courseID = { globalCourseID: req.params.id }
+        
+        const result = await GlobalCourse.deleteOne(courseID)
 
-        if (course == null) {
+        console.log(result.deletedCount)
+        if (result.deletedCount == 0) {
             throw new InvalidIdException("course")
         }
-
-        const result = await GlobalCourse.deleteOne(courseID)
 
         res.status(StatusCodes.OK).send()
     } catch (error) {
