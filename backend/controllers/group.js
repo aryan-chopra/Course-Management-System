@@ -25,6 +25,29 @@ export const readGroup = async (req, res, next) => {
 
         const groupDoc = await Group.readGroup(semester, number)
 
+        if (groupDoc == null) {
+            throw new InvalidIdException("group")
+        }
+
+        res.status(StatusCodes.OK).json({ group: groupDoc })
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const updateGroup = async (req, res, next) => {
+    try {
+        const semester = req.params.semester
+        const number = req.params.number
+
+        const update = req.body
+
+        const groupDoc = await Group.updateGroup(semester, number, update)
+
+        if (groupDoc == null) {
+            throw new InvalidIdException("group")
+        }
+
         res.status(StatusCodes.OK).json({ group: groupDoc })
     } catch (error) {
         next(error)
