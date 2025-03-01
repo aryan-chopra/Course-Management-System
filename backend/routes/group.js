@@ -1,5 +1,5 @@
 import express from "express";
-import { createGroup } from "../controllers/group.js";
+import { createGroup, readGroup } from "../controllers/group.js";
 
 const GroupRoutes = express()
 
@@ -8,5 +8,7 @@ GroupRoutes.get('/', (req, res) => {
 })
 
 GroupRoutes.post('/create', createGroup)
+
+GroupRoutes.get('/:semester/:number', readGroup)
 
 export default GroupRoutes
