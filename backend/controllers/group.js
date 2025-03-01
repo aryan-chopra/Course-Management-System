@@ -3,12 +3,7 @@ import Group from "../services/group.js";
 
 export const createGroup = async (req, res, next) => {
     try {
-        const groupDoc = {
-            groupNumber: req.body.number,
-            semester: req.body.semester,
-            mentor: req.body.mentor,
-            students: req.body.students,
-        }
+        const groupDoc = req.body
 
         await Group.createGroup(groupDoc)
         res.status(StatusCodes.OK).json({ status: "ok" })
