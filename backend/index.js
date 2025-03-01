@@ -3,6 +3,7 @@ import express from "express"
 import { connectToDatabase } from "./db.js"
 import GlobalCourseRoutes from "./routes/globalCourse.js"
 import { errorHandler } from "./middlewares/errorHandler.js"
+import GroupRoutes from "./routes/group.js"
 
 const app = express()
 
@@ -20,6 +21,7 @@ app.get('/', (req, res) => {
 
 //Defining middlewares for specific routes/tasks
 app.use('/course', GlobalCourseRoutes)
+app.use('/group', GroupRoutes)
 
 //Error Handling
 app.use(errorHandler)
@@ -27,5 +29,3 @@ app.use(errorHandler)
 //Init
 console.log("Listening at localhost:" + port)
 app.listen(port)
-
-

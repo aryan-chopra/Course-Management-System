@@ -1,7 +1,5 @@
 import { StatusCodes } from "http-status-codes";
-// import GlobalCourse from "../models/globalCourse.js";
 import { InvalidIdException } from "../exceptions/idException.js";
-
 import GlobalCourse from "../services/globalCourse.js";
 
 export const createGlobalCourse = async (req, res, next) => {
@@ -11,7 +9,7 @@ export const createGlobalCourse = async (req, res, next) => {
             name: req.body.name,
             semester: req.body.semester,
             coordinator: req.body.coordinator,
-            assignedToGroups: [...req.body.assignedToGroups]
+            assignedToGroups: req.body.groups
         }
         console.log(req.body.groups)
 
@@ -70,23 +68,3 @@ export const deleteGlobalCourse = async (req, res, next) => {
         next(error)
     }
 }
-
-// // GlobalCourse.deleteGlobalCourse = async (req, res, next) => {
-// //     try {
-// //         console.log("Deleting " + req.params.id)
-// //         const courseID = { globalCourseID: req.params.id }
-
-// //         const result = await GlobalCourse.deleteOne(courseID)
-
-// //         console.log(result.deletedCount)
-// //         if (result.deletedCount == 0) {
-// //             throw new InvalidIdException("course")
-// //         }
-
-// //         res.status(StatusCodes.OK).send()
-// //     } catch (error) {
-// //         next(error)
-// //     }
-// // }
-
-// // export default GlobalCourse
