@@ -17,3 +17,16 @@ export const createGroup = async (req, res, next) => {
         next(error)
     }
 }
+
+export const readGroup = async (req, res, next) => {
+    try {
+        const semester = req.params.semester
+        const number = req.params.number
+
+        const groupDoc = await Group.readGroup(semester, number)
+
+        res.status(StatusCodes.OK).json({ group: groupDoc })
+    } catch (error) {
+        next(error)
+    }
+}
