@@ -1,7 +1,6 @@
 import express from "express";
 import { createGlobalCourse, deleteGlobalCourse, readGlobalCourse, updateGlobalCourse } from "../controllers/globalCourse.js";
 
-
 const GlobalCourseRoutes = express()
 
 GlobalCourseRoutes.get('/', (req, res) => {
