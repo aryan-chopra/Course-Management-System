@@ -1,5 +1,5 @@
 import express from "express";
-import { createGroup, readGroup, updateGroup } from "../controllers/group.js";
+import { createGroup, deleteGroup, readGroup, updateGroup } from "../controllers/group.js";
 
 const GroupRoutes = express()
 
@@ -12,5 +12,7 @@ GroupRoutes.post('/create', createGroup)
 GroupRoutes.get('/:semester/:number', readGroup)
 
 GroupRoutes.put('/:semester/:number', updateGroup)
+
+GroupRoutes.delete('/:semester/:number', deleteGroup)
 
 export default GroupRoutes

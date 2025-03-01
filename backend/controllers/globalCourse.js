@@ -1,5 +1,4 @@
 import { StatusCodes } from "http-status-codes";
-import { InvalidIdException } from "../exceptions/idException.js";
 import GlobalCourse from "../services/globalCourse.js";
 
 export const createGlobalCourse = async (req, res, next) => {
@@ -25,11 +24,7 @@ export const readGlobalCourse = async (req, res, next) => {
         const courseId = req.params.id
 
         const course = await GlobalCourse.readGlobalCourse(courseId)
-        if (course == null) {
-            throw new InvalidIdException("course")
-        }
 
-        console.log(course)
         res.status(StatusCodes.OK).json({ course: course })
     } catch (error) {
         next(error)
@@ -43,11 +38,6 @@ export const updateGlobalCourse = async (req, res, next) => {
 
         const doc = await GlobalCourse.updateGlobalCourse(courseID, update)
 
-        if (doc == null) {
-            throw new InvalidIdException("course")
-        }
-
-        console.log(doc)
         res.status(StatusCodes.OK).json({course: doc})
     } catch (error) {
         next(error)
@@ -59,9 +49,6 @@ export const deleteGlobalCourse = async (req, res, next) => {
         const courseId = req.params.id
 
         const result = await GlobalCourse.deleteGlobalCourse(courseId)
-        if (result.deletedCount == 0) {
-            throw new InvalidIdException("course")
-        }
 
         res.status(StatusCodes.OK).send()
     } catch(error) {
