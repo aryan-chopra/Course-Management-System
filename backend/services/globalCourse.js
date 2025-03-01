@@ -27,7 +27,7 @@ GlobalCourse.updateGlobalCourse = async (courseId, update) => {
         throw new InvalidIdException("course")
     }
 
-    return doc
+    return course
 }
 
 GlobalCourse.deleteGlobalCourse = async (courseId) => {

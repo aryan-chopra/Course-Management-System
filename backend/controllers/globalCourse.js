@@ -3,13 +3,7 @@ import GlobalCourse from "../services/globalCourse.js";
 
 export const createGlobalCourse = async (req, res, next) => {
     try {
-        const globalCourseObject = {
-            globalCourseID: req.body.id,
-            name: req.body.name,
-            semester: req.body.semester,
-            coordinator: req.body.coordinator,
-            assignedToGroups: req.body.groups
-        }
+        const globalCourseObject = req.body
         console.log(req.body.groups)
 
         await GlobalCourse.createGlobalCourse(globalCourseObject)
