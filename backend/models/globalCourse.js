@@ -10,6 +10,7 @@ const globalCourseSchema = new mongoose.Schema({
     name: {type: String, required: true},
     semester: {type: Number, required: true},
     assignedToGroups: [Number],
+    resources: [String],
     coordinator: {type: String, required: true}
 },
     {
