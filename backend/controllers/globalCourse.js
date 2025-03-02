@@ -27,10 +27,10 @@ export const readGlobalCourse = async (req, res, next) => {
 
 export const updateGlobalCourse = async (req, res, next) => {
     try {
-        const courseID = { globalCourseID: req.params.id }
+        const courseId = req.params.id
         const update = req.body
 
-        const doc = await GlobalCourse.updateGlobalCourse(courseID, update)
+        const doc = await GlobalCourse.updateGlobalCourse(courseId, update)
 
         res.status(StatusCodes.OK).json({course: doc})
     } catch (error) {

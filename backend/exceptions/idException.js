@@ -5,3 +5,4 @@ export class InvalidIdException extends Error {
         this.status = 404
     }
 }
+
