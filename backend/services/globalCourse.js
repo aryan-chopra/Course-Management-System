@@ -8,7 +8,7 @@ GlobalCourse.createGlobalCourse = async (globalCourse) => {
 }
 
 GlobalCourse.readGlobalCourse = async (courseId) => {
-    const course = await GlobalCourse.findOne({ globalCourseID: courseId })
+    const course = await GlobalCourse.findOne({ globalCourseId: courseId })
 
     if (course == null) {
         throw new InvalidIdException("course")
@@ -18,20 +18,23 @@ GlobalCourse.readGlobalCourse = async (courseId) => {
 }
 
 GlobalCourse.updateGlobalCourse = async (courseId, update) => {
-    const course = await GlobalCourse.findOneAndUpdate(courseId, update, {
-        runValidators: true,
-        returnDocument: "after"
-    })
+    const course = await GlobalCourse.findOne({ globalCourseId: courseId })
 
     if (course == null) {
         throw new InvalidIdException("course")
     }
 
+    Object.assign(course, update)
+
+    await course.save()
+
     return course
 }
 
 GlobalCourse.deleteGlobalCourse = async (courseId) => {
-    const result = await GlobalCourse.deleteOne({ globalCourseID: courseId })
+    const course = await GlobalCourse.findOne({ globalCourseId: courseId })
+
+    const result = await course.deleteOne()
 
     if (result.deletedCount == 0) {
         throw new InvalidIdException("course")
