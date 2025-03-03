@@ -1,20 +1,12 @@
 import mongoose, { set } from "mongoose";
-import GroupCourse from "../services/groupCourse.js";
 import Group from "./group.js";
-import { InvalidEntityException } from "../exceptions/entityException.js";
 
 /**
- * Schema for GlobalCourse
+ * Schema for Course
  */
 
-const globalCourseSchema = new mongoose.Schema({
-    globalCourseId: {
-        type: String,
-        required: [true, 'GIMME AN ID!'],
-        unique: [true, "globalCourseId already exists"],
-        index: true
-    },
-    name: { type: String, required: true },
+const courseSchema = new mongoose.Schema({
+    courseName: { type: String, required: true },
     semester: { type: Number, required: true },
     assignedToGroups: {
         type: [Number],
@@ -23,13 +15,14 @@ const globalCourseSchema = new mongoose.Schema({
             return assignedToGroups
         }
     },
-    resources: [String],
     coordinator: { type: String, required: true }
 },
     {
-        collection: 'globalCourses',
+        collection: 'courses',
         minimize: false
     })
+
+courseSchema.index({ semester: 1, courseName: 1 }, { unique: true })
 
 
 /** 
@@ -37,11 +30,11 @@ const globalCourseSchema = new mongoose.Schema({
   */
 
 //Hook to "deep delete" a course, i.e, delete the sub courses contained in it
-globalCourseSchema.pre("deleteOne", { document: true, query: false }, async function (next) {
+courseSchema.pre("deleteOne", { document: true, query: false }, async function (next) {
     console.log("Deleting a doc")
 
     for (const groupNumber of this.assignedToGroups) {
-        await GroupCourse.deleteCourse(this.semester, groupNumber, this.globalCourseId)
+        await Group.deleteCourse(this.semester, groupNumber, this.courseName)
     }
 
     next()
@@ -53,7 +46,7 @@ globalCourseSchema.pre("deleteOne", { document: true, query: false }, async func
  */
 
 // Hook to check if the document is a new document
-globalCourseSchema.pre("save", function (next) {
+courseSchema.pre("save", function (next) {
     this._wasNew = this.isNew
 
     if (this.isNew == true) {
@@ -84,7 +77,7 @@ globalCourseSchema.pre("save", function (next) {
 })
 
 // Hook to verify if the groups exist
-globalCourseSchema.pre("save", async function (next) {
+courseSchema.pre("save", async function (next) {
     for (const groupNumber of this._createGroupCourses) {
         await Group.readGroup(this.semester, groupNumber)
     }
@@ -93,28 +86,21 @@ globalCourseSchema.pre("save", async function (next) {
 })
 
 // Hook to create new GroupCourses
-globalCourseSchema.pre("save", async function (next) {
-    this._groupsCreated = []
+courseSchema.post("save", async function (doc, next) {
+    doc._groupsAssigned = []
 
     try {
 
         //Create all the group-courses to create
-        for (const groupNumber of this._createGroupCourses) {
-            const course = {
-                teacher: this.coordinator,
-                groupNumber: groupNumber,
-                semester: this.semester,
-                parentCourseId: this.globalCourseId,
-            }
-
-            await GroupCourse.createCourse(course)
-            this._groupsCreated.push(groupNumber)
+        for (const groupNumber of doc._createGroupCourses) {
+            await Group.addCourse(doc.semester, groupNumber, doc.courseName)
+            doc._groupsAssigned.push(groupNumber)
         }
     } catch (error) {
 
         // Delete created courses if an error occurs
-        for (const groupNumber of this._groupsCreated) {
-            await GroupCourse.deleteCourse(this.semester, groupNumber, this.globalCourseId)
+        for (const groupNumber of this._groupsAssigned) {
+            await Group.deleteCourse(doc.semester, groupNumber, doc.courseName)
         }
 
         next(error)
@@ -124,25 +110,25 @@ globalCourseSchema.pre("save", async function (next) {
 })
 
 // Hook to delete group-courses to delete
-globalCourseSchema.post("save", async function (doc, next) {
+courseSchema.post("save", async function (doc, next) {
     for (const groupNumber of this._deleteGroupCourses) {
-        await GroupCourse.deleteCourse(doc.semester, groupNumber, doc.globalCourseId)
+        await Group.deleteCourse(doc.semester, groupNumber, doc.courseName)
     }
 })
 
 // Hook to delete created group-courses in case of an error
-globalCourseSchema.post("save", async function (error, doc, next) {
-    for (const groupNumber of this._groupsCreated) {
-        await GroupCourse.deleteCourse(doc.semester, groupNumber, doc.globalCourseId)
-    }
+// courseSchema.post("save", async function (error, doc, next) {
+//     for (const groupNumber of this._groupsAssigned) {
+//         await Group.deleteCourse(doc.semester, groupNumber, doc.courseName)
+//     }
 
-    next()
-})
+//     next()
+// })
 
 /**
  * Model for GlobalCourse
  */
 
-const GlobalCourse = mongoose.model('globalCourse', globalCourseSchema)
+const Course = mongoose.model('course', courseSchema)
 
-export default GlobalCourse
+export default Course
