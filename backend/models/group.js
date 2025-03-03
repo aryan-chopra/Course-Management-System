@@ -5,7 +5,9 @@ const groupSchema = new mongoose.Schema({
     semester: { type: Number, required: [true, "Semester is required"] },
     mentor: { type: String, required: [true, "Mentor is required"] },
     students: [String],
-    courses: [String]
+    courses: {
+        type: [String],
+    }
 },
     {
         collection: 'groups',
@@ -14,6 +16,11 @@ const groupSchema = new mongoose.Schema({
 
 groupSchema.index({ semester: 1, groupNumber: 1 }, { unique: true })
 
+/**
+ * SAVE PRE/POST HOOKS
+ */
+
+// Hook to simplify 11000 error in mongodb
 groupSchema.post('save', (error, doc, next) => {
     if (error.name == 'MongoServerError' && error.code == 11000) {
         next(new Error('Semester can not have multiple groups with same number'))
