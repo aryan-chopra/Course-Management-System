@@ -1,5 +1,6 @@
 import mongoose, { set } from "mongoose";
 import Group from "./group.js";
+import Resource from "./resource.js";
 
 /**
  * Schema for Course
@@ -29,9 +30,9 @@ courseSchema.index({ semester: 1, courseName: 1 }, { unique: true })
   * DELETE PRE/POST HOOKS
   */
 
-//Hook to "deep delete" a course, i.e, delete the sub courses contained in it
+//Hook to "deep delete" a course, i.e, delete the courses assigned to groups, and course's resources
 courseSchema.pre("deleteOne", { document: true, query: false }, async function (next) {
-    console.log("Deleting a doc")
+    await Resource.deleteResourcesOfCourse(this.semester, this.courseName)
 
     for (const groupNumber of this.assignedToGroups) {
         await Group.deleteCourse(this.semester, groupNumber, this.courseName)

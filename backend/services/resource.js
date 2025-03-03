@@ -25,4 +25,18 @@ Resource.readResourcesOfGroupForCourse = async (semester, group, course) => {
     return allResources
 }
 
+Resource.deleteResourcesOfCourse = async (semester, course) => {
+    await Resource.deleteMany({
+        semester: semester,
+        course: course
+    })
+}
+
+Resource.deleteResourcesOfGroup = async (semester, group) => {
+    await Resource.deleteMany({
+        semester: semester,
+        group: group
+    })
+}
+
 export default Resource
