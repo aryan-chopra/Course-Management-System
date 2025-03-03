@@ -1,4 +1,5 @@
 import mongoose, { mongo } from "mongoose";
+import Resource from "../services/resource.js";
 
 const groupSchema = new mongoose.Schema({
     groupNumber: { type: Number, required: [true, "Group number is required"] },
@@ -15,6 +16,19 @@ const groupSchema = new mongoose.Schema({
     })
 
 groupSchema.index({ semester: 1, groupNumber: 1 }, { unique: true })
+
+
+/**
+ * DELETE PRE/POST HOOKS
+ */
+
+// Hook to "deep delete" group, i.e, delete all it's resources
+groupSchema.pre("deleteOne", {document: true, query: false}, async function (next) {
+    await Resource.deleteResourcesOfGroup(this.semester, this.groupNumber)
+
+    next()
+})
+
 
 /**
  * SAVE PRE/POST HOOKS

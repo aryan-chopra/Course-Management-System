@@ -37,11 +37,13 @@ Group.updateGroup = async (semester, number, update) => {
 }
 
 Group.deleteGroup = async (semester, number) => {
-    const result = await Group.deleteOne({ semester: semester, groupNumber: number })
+    const group = await Group.findOne({ semester: semester, groupNumber: number })
 
-    if (result.deletedCount == 0) {
+    if (group == null) {
         throw new InvalidIdException("group")
     }
+
+    await group.deleteOne()
 }
 
 Group.addCourse = async (semester, number, course) => {
