@@ -4,6 +4,7 @@ import { connectToDatabase } from "./db.js"
 import CourseRoutes from "./routes/course.js"
 import { errorHandler } from "./middlewares/errorHandler.js"
 import GroupRoutes from "./routes/group.js"
+import ResourceRoutes from "./routes/resource.js"
 
 const app = express()
 
@@ -22,6 +23,7 @@ app.get('/', (req, res) => {
 //Defining middlewares for specific routes/tasks
 app.use('/course', CourseRoutes)
 app.use('/group', GroupRoutes)
+app.use('/resource', ResourceRoutes)
 
 //Error Handling
 app.use(errorHandler)
