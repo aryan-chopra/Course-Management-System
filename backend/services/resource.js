@@ -39,4 +39,28 @@ Resource.deleteResourcesOfGroup = async (semester, group) => {
     })
 }
 
+Resource.deleteResource = async (resourceId) => {
+    const result = await Resource.deleteOne({
+        _id: resourceId
+    })
+
+    if (result.deletedCount == 0) {
+        throw InvalidIdException("resource")
+    }
+}
+
+Resource.updateResource = async (resourceId, update) => {
+    const resource = await Resource.findOneAndUpdate({
+        _id: resourceId
+    },
+        update
+    )
+
+    if (resource == null) {
+        throw InvalidIdException("resource")
+    }
+
+    return resource
+}
+
 export default Resource
