@@ -7,12 +7,18 @@ Resource.createResource = async (resourceDoc) => {
     await resource.save()
 }
 
-Resource.readResourcesOfGroupForCourse = async (semester, group, course) => {
+Resource.readDepartmentCourses = async (semester, course) => {
     const departmentCourses = await Resource.find({
         semester: semester,
         group: null,
         course: course
     })
+
+    return departmentCourses
+}
+
+Resource.readResourcesOfGroupForCourse = async (semester, group, course) => {
+    const departmentCourses = await Resource.readDepartmentCourses(semester, course)
 
     const groupCourses = await Resource.find({
         semester: semester,

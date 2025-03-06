@@ -5,6 +5,7 @@ import CourseRoutes from "./routes/course.js"
 import { errorHandler } from "./middlewares/errorHandler.js"
 import GroupRoutes from "./routes/group.js"
 import ResourceRoutes from "./routes/resource.js"
+import StudentRoutes from "./routes/student.js"
 
 const app = express()
 
@@ -24,6 +25,7 @@ app.get('/', (req, res) => {
 app.use('/course', CourseRoutes)
 app.use('/group', GroupRoutes)
 app.use('/resource', ResourceRoutes)
+app.use('/student', StudentRoutes)
 
 //Error Handling
 app.use(errorHandler)

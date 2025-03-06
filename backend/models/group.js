@@ -5,17 +5,35 @@ const groupSchema = new mongoose.Schema({
     groupNumber: { type: Number, required: [true, "Group number is required"] },
     semester: { type: Number, required: [true, "Semester is required"] },
     mentor: { type: String, required: [true, "Mentor is required"] },
-    students: [String],
     courses: {
         type: [String],
     }
 },
     {
         collection: 'groups',
-        minimize: false
+        minimize: false,
+        toJSON: { virtuals: true },
+        toObject: { virtuals: true }
     })
 
 groupSchema.index({ semester: 1, groupNumber: 1 }, { unique: true })
+
+groupSchema.virtual('students', {
+    ref: 'student',
+    localField: ["semester", "groupNumber"],
+    foreignField: ["semester", "group"]
+    // match: (student) => ({ semester: student.semester })
+})
+
+
+/**
+ * FIND/FINDONE PRE/POST HOOKS
+ */
+
+groupSchema.pre(["find", "findOne"], function (next) {
+    this.populate('students')
+    next()
+})
 
 
 /**
@@ -23,7 +41,7 @@ groupSchema.index({ semester: 1, groupNumber: 1 }, { unique: true })
  */
 
 // Hook to "deep delete" group, i.e, delete all it's resources
-groupSchema.pre("deleteOne", {document: true, query: false}, async function (next) {
+groupSchema.pre("deleteOne", { document: true, query: false }, async function (next) {
     await Resource.deleteResourcesOfGroup(this.semester, this.groupNumber)
 
     next()
