@@ -12,6 +12,7 @@ CourseRoutes.post('/create', createCourse)
 CourseRoutes.get('/:semester/:name', readCourse)
 
 CourseRoutes.put('/:semester/:name', updateCourse)
+CourseRoutes.put('/:semester/:name/updateGroups', )
 
 CourseRoutes.delete('/:semester/:name',deleteCourse)
 

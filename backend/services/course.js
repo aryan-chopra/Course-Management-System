@@ -31,6 +31,10 @@ Course.updateCourse = async (semester, name, update) => {
     return course
 }
 
+Course.updateGroupInfo = async (semester, name, updates) => {
+    //TODO: IMPLEMENT IT
+}
+
 Course.deleteCourse = async (semester, name) => {
     const course = await Course.findOne({ semester: semester, courseName: name })
 

@@ -7,13 +7,16 @@ const studentSchema = new mongoose.Schema({
         unique: [true, "Roll number must be unique"],
         index: true
     },
+
     name: {
         type: String,
         required: [true, "Student name is required"],
     },
+
     group: {
         type: Number,
     },
+
     semester: {
         type: Number,
         required: [true, "Student must have a semester"]

@@ -9,30 +9,37 @@ const resourceSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
+
     course: {
         type: String,
         required: true
     },
+
     group: {
         type: Number,
         default: null
     },
+
     author: {
         type: String,
         required: true
     },
+
     authorDesignation: {
         type: String,
         required: true
     },
+
     title: {
         type: String,
         required: true
     },
+
     description: {
         type: String,
         default: "No description provided..."
     },
+    
     content: {
         type: String,
         required: true

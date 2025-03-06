@@ -41,6 +41,21 @@ export const updateCourse = async (req, res, next) => {
     }
 }
 
+export const updateCourseGroups = async (req, res, next) => {
+    try {
+        const semester = req.params.semester
+        const name = req.params.name
+
+        const addGroups = req.body.addGroups
+        const removeGroups = req.body.removeGroups
+        const editTeacherOf = req.body.editTeacherOf
+    
+        
+    } catch (error) {
+        next(error)
+    }
+}
+
 export const deleteCourse = async (req, res, next) => {
     try {
         const semester = req.params.semester

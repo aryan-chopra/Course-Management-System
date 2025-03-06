@@ -2,9 +2,21 @@ import mongoose, { mongo } from "mongoose";
 import Resource from "../services/resource.js";
 
 const groupSchema = new mongoose.Schema({
-    groupNumber: { type: Number, required: [true, "Group number is required"] },
-    semester: { type: Number, required: [true, "Semester is required"] },
-    mentor: { type: String, required: [true, "Mentor is required"] },
+    groupNumber: {
+        type: Number,
+        required: [true, "Group number is required"]
+    },
+
+    semester: {
+        type: Number,
+        required: [true, "Semester is required"]
+    },
+
+    mentor: {
+        type: String,
+        required: [true, "Mentor is required"]
+    },
+
     courses: {
         type: [String],
     }
