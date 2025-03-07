@@ -46,11 +46,17 @@ export const updateCourseGroups = async (req, res, next) => {
         const semester = req.params.semester
         const name = req.params.name
 
-        const addGroups = req.body.addGroups
-        const removeGroups = req.body.removeGroups
-        const editTeacherOf = req.body.editTeacherOf
-    
-        
+        const addGroupsToCourse = req.body.addGroups === undefined ? [] : req.body.addGroups
+        const removeGroupsFromCourse = req.body.removeGroups === undefined ? [] : req.body.removeGroups
+        const changeTeacherOfGroupsInCourse = req.body.editTeacherOf === undefined ? [] : req.body.editTeacherOf
+
+        await Course.updateGroupInfo(semester, name, {
+            addGroupsToCourse: addGroupsToCourse,
+            removeGroupsFromCourse: removeGroupsFromCourse,
+            changeTeacherOfGroupsInCourse: changeTeacherOfGroupsInCourse 
+        })
+
+        res.status(StatusCodes.OK).send()
     } catch (error) {
         next(error)
     }

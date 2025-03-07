@@ -6,6 +6,7 @@ import { errorHandler } from "./middlewares/errorHandler.js"
 import GroupRoutes from "./routes/group.js"
 import ResourceRoutes from "./routes/resource.js"
 import StudentRoutes from "./routes/student.js"
+import TeacherRoutes from "./routes/teacher.js"
 
 const app = express()
 
@@ -26,6 +27,7 @@ app.use('/course', CourseRoutes)
 app.use('/group', GroupRoutes)
 app.use('/resource', ResourceRoutes)
 app.use('/student', StudentRoutes)
+app.use('/teacher', TeacherRoutes)
 
 //Error Handling
 app.use(errorHandler)

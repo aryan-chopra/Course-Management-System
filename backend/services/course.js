@@ -1,5 +1,6 @@
 import { InvalidIdException } from "../exceptions/idException.js";
 import Course from "../models/course.js";
+import Group from "./group.js";
 
 Course.createCourse = async (courseDoc) => {
     const course = new Course(courseDoc)
@@ -17,22 +18,76 @@ Course.readCourse = async (semester, name) => {
     return course
 }
 
-Course.updateCourse = async (semester, name, update) => {
-    const course = await Course.findOne({ semester: semester, courseName: name })
+Course.checkExistance = async (semester, courseName) => {
+    const exists = await Course.exists(
+        {
+            semester: semester,
+            courseName: courseName
+        }
+    )
 
-    if (course == null) {
+    if (exists === null) {
+        console.log("Does not exist")
         throw new InvalidIdException("course")
     }
+    console.log(exists)
+}
 
-    Object.assign(course, update)
+Course.updateCourse = async (semester, courseName, update) => {
+    await Course.checkExistance(semester, courseName)
 
-    await course.save()
+    await Course.updateOne(
+        {
+            semester: semester,
+            courseName: courseName
+        },
+        {
+            update
+        },
+        {
+            runValidators: true
+        }
+    )
 
     return course
 }
 
-Course.updateGroupInfo = async (semester, name, updates) => {
-    //TODO: IMPLEMENT IT
+Course.updateGroupInfo = async (semester, courseName, updates) => {
+    await Course.checkExistance(semester, courseName)
+
+    const addGroupsToCourse = updates.addGroupsToCourse
+    const removeGroupsFromCourse = updates.removeGroupsFromCourse
+    const changeTeacherOfGroupsInCourse = updates.changeTeacherOfGroupsInCourse
+
+    //Add course to group
+    for (const groupTeacherInfo of addGroupsToCourse) {
+        await Group.addCourse(semester, groupTeacherInfo.groupNumber,
+            {
+                courseName: courseName,
+                teacherEmail: groupTeacherInfo.teacherEmail
+            }
+        )
+    }
+
+    //Remove course from group
+    for (const groupTeacherInfo of removeGroupsFromCourse) {
+        await Group.removeCourse(semester, groupTeacherInfo.groupNumber,
+            {
+                courseName: courseName,
+                teacherEmail: groupTeacherInfo.teacherEmail
+            }
+        )
+    }
+
+    //Delete course from group
+    for (const groupTeacherInfo of changeTeacherOfGroupsInCourse) {
+        await Group.changeTeacherOfCourse(semester, groupTeacherInfo.groupNumber,
+            {
+                courseName: courseName,
+                teacherEmail: groupTeacherInfo.teacherEmail
+            }
+        )
+    }
 }
 
 Course.deleteCourse = async (semester, name) => {

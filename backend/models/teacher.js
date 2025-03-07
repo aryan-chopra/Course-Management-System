@@ -6,18 +6,17 @@ const teacherSchema = new mongoose.Schema({
         required: [true, "Please provide a name"],
     },
 
-    email: {
+    teacherEmail: {
         type: String,
         required: [true, "Please provide an e-mail"],
-        match: [/\S+@\S+\.\S+/, "Please use a valid email address"],
-        unique: [true, "E-mail already in use"],
-        index: true
+        match: [/\S+@\S+\.\S+/, "Please use a valid email address"]
     },
 
-    assignedGroups: {
+    assignedCourses: {
         type: [{
             semester: Number,
             groupNumber: Number,
+            courseName: String
         }],
         default: []
     },
@@ -29,7 +28,7 @@ const teacherSchema = new mongoose.Schema({
         }],
         default: []
     },
-    
+
     mentorOf: {
         type: [{
             semester: Number,
@@ -42,6 +41,8 @@ const teacherSchema = new mongoose.Schema({
         collection: 'teachers',
         minimize: false
     })
+
+teacherSchema.index({teacherEmail: 1}, {unique: true})
 
 const Teacher = mongoose.model('teacher', teacherSchema)
 

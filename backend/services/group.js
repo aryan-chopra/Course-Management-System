@@ -42,6 +42,18 @@ Group.readCourses = async (semester, number) => {
     return allResources
 }
 
+Group.checkExistance = async (semester, groupNumber) => {
+    const exists = await Group.exists(
+        {
+            semester: semester,
+            groupNumber: groupNumber
+        }
+    )
+
+    if (exists === null) {
+        throw new InvalidIdException("group")
+    }
+}
 
 /**
  * PUT 
@@ -66,14 +78,16 @@ Group.updateGroup = async (semester, number, update) => {
     return groupDoc
 }
 
-Group.addCourse = async (semester, number, course) => {
+Group.addCourse = async (semester, groupNumber, courseTeacherInfo) => {
+    Group.checkExistance(semester, groupNumber)
+
     await Group.updateOne(
         {
             semester: semester,
-            groupNumber: number
+            groupNumber: groupNumber
         },
         {
-            $push: { courses: course }
+            $push: { courses: courseTeacherInfo }
         },
         {
             runValidators: true
@@ -81,14 +95,36 @@ Group.addCourse = async (semester, number, course) => {
     )
 }
 
-Group.deleteCourse = async (semester, number, course) => {
+Group.removeCourse = async (semester, groupNumber, courseTeacherInfo) => {
+    Group.checkExistance(semester, groupNumber)
+
     await Group.updateOne(
         {
             semester: semester,
-            groupNumber: number
+            groupNumber: groupNumber
         },
         {
-            $pull: { courses: course }
+            $pull: { courses: courseTeacherInfo }
+        },
+        {
+            runValidators: true
+        }
+    )
+}
+
+Group.changeTeacherOfCourse = async (semester, groupNumber, courseTeacherInfo) => {
+    Group.checkExistance(semester, groupNumber)
+
+    await Group.updateOne(
+        {
+            semester: semester,
+            groupNumber: groupNumber,
+            "courses.courseName": courseTeacherInfo.courseName
+        },
+        {
+            $set: {
+                "courses.$.teacherEmail": courseTeacherInfo.teacherEmail
+            }
         },
         {
             runValidators: true

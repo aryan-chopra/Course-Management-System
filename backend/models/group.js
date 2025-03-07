@@ -1,5 +1,6 @@
 import mongoose, { mongo } from "mongoose";
 import Resource from "../services/resource.js";
+import Teacher from "../services/teacher.js";
 
 const groupSchema = new mongoose.Schema({
     groupNumber: {
@@ -18,7 +19,10 @@ const groupSchema = new mongoose.Schema({
     },
 
     courses: {
-        type: [String],
+        type: [{
+            courseName: String,
+            teacherEmail: String
+        }]
     }
 },
     {
@@ -29,6 +33,9 @@ const groupSchema = new mongoose.Schema({
     })
 
 groupSchema.index({ semester: 1, groupNumber: 1 }, { unique: true })
+
+
+// Virtual to populate students of a group
 
 groupSchema.virtual('students', {
     ref: 'student',
@@ -71,6 +78,102 @@ groupSchema.post('save', (error, doc, next) => {
     } else {
         next()
     }
+})
+
+
+/**
+ * UPDATE PRE/POST HOOKS
+ */
+
+//Assign course to teacher in case of a push operation to courses
+groupSchema.pre('updateOne', async function (next) {
+    if (this.getUpdate().$push !== undefined) {
+        console.log("In push")
+
+        //Adding a new course
+        const semester = Number(this.getQuery().semester)
+        const groupNumber = Number(this.getQuery().groupNumber)
+        const teacherEmail = this.getUpdate().$push.courses.teacherEmail
+        const courseName = this.getUpdate().$push.courses.courseName
+
+        const courseInfo = {
+            semester: semester,
+            groupNumber: groupNumber,
+            courseName: courseName
+        }
+
+        await Teacher.assignCourse(teacherEmail, courseInfo)
+    }
+
+    next()
+})
+
+//Remove course from teacher in case of a pull operation
+groupSchema.pre('updateOne', async function (next) {
+    if (this.getUpdate().$pull !== undefined) {
+        //Removing an old course
+        const semester = Number(this.getQuery().semester)
+        const groupNumber = Number(this.getQuery().groupNumber)
+        const teacherEmail = this.getUpdate().$pull.courses.teacherEmail
+        const courseName = this.getUpdate().$pull.courses.courseName
+
+        const courseInfo = {
+            semester: semester,
+            groupNumber: groupNumber,
+            courseName: courseName
+        }
+
+        await Teacher.removeCourse(teacherEmail, courseInfo)
+    }
+
+    next()
+})
+
+//Remove course access from old teacher, and add course to new teacher 
+groupSchema.pre('updateOne', async function (next) {
+    if (this.getUpdate().$set !== undefined) {
+        const semester = Number(this.getQuery().semester)
+        const groupNumber = Number(this.getQuery().groupNumber)
+        const courseName = this.getQuery()["courses.courseName"]
+        const newTeacherEmail = this.getUpdate().$set["courses.$.teacherEmail"]
+
+        const oldInfo = await this.model.aggregate([{
+            $match: {
+                semester: semester,
+                groupNumber: groupNumber
+            }
+        },
+        {
+            $unwind: "$courses"
+        },
+        {
+            $match: {
+                "courses.courseName": courseName
+            }
+        },
+        {
+            $project: {
+                teacherEmail: "$courses.teacherEmail"
+            }
+        },
+        {
+            $unset: "_id"
+        }
+        ])
+        
+        const oldTeacherEmail = oldInfo[0].teacherEmail
+
+        const courseInfo = {
+            semester: semester,
+            groupNumber: groupNumber,
+            courseName: courseName
+        }
+
+        await Teacher.removeCourse(oldTeacherEmail, courseInfo)
+        await Teacher.assignCourse(newTeacherEmail, courseInfo)
+    }
+
+    next()
 })
 
 const Group = mongoose.model('group', groupSchema)
