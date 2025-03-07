@@ -11,15 +11,15 @@ const resourceSchema = new mongoose.Schema({
         immutable: true
     },
 
-    course: {
-        type: String,
-        required: true,
-        immutable: true
-    },
-
     group: {
         type: Number,
         default: null,
+        immutable: true
+    },
+
+    course: {
+        type: String,
+        required: true,
         immutable: true
     },
 
