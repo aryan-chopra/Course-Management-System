@@ -5,7 +5,8 @@ const studentSchema = new mongoose.Schema({
         type: Number,
         required: [true, "Roll number is required"],
         unique: [true, "Roll number must be unique"],
-        index: true
+        index: true,
+        immutable: true
     },
 
     name: {

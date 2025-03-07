@@ -7,27 +7,26 @@ import mongoose from "mongoose";
 const resourceSchema = new mongoose.Schema({
     semester: {
         type: Number,
-        required: true
+        required: true,
+        immutable: true
     },
 
     course: {
         type: String,
-        required: true
+        required: true,
+        immutable: true
     },
 
     group: {
         type: Number,
-        default: null
+        default: null,
+        immutable: true
     },
 
     author: {
         type: String,
-        required: true
-    },
-
-    authorDesignation: {
-        type: String,
-        required: true
+        required: true,
+        immutable: true
     },
 
     title: {

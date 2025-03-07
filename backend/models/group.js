@@ -5,12 +5,14 @@ import Teacher from "../services/teacher.js";
 const groupSchema = new mongoose.Schema({
     groupNumber: {
         type: Number,
-        required: [true, "Group number is required"]
+        required: [true, "Group number is required"],
+        immutable: true
     },
 
     semester: {
         type: Number,
-        required: [true, "Semester is required"]
+        required: [true, "Semester is required"],
+        immutable: true
     },
 
     mentor: {
@@ -45,10 +47,46 @@ groupSchema.virtual('students', {
 })
 
 
+
+/**
+ * DELETE PRE/POST HOOKS
+ */
+
+//Hook to remove mentor and group resources
+groupSchema.post('deleteOne', { document: true, query: false }, async function (doc, next) {
+    const groupInfo = {
+        semester: this.semester,
+        groupNumber: this.groupNumber
+    }
+
+    //Removing mentor
+    await Teacher.removeMentorForGroup(this.mentor, groupInfo)
+
+    //Deleting resources
+    await Resource.deleteResourcesOfGroup(this.semester, this.groupNumber)
+
+    //Removing course from teacher
+    for (const courseInfo of this.courses) {
+        const courseDoc = {
+            semester: this.semester,
+            groupNumber: this.groupNumber,
+            courseName: courseInfo.courseName
+        }
+
+        const teacherEmail = courseInfo.teacherEmail
+
+        await Teacher.removeCourse(teacherEmail, courseDoc)
+    }
+
+    next()
+})
+
+
 /**
  * FIND/FINDONE PRE/POST HOOKS
  */
 
+//Hook to populate students
 groupSchema.pre(["find", "findOne"], function (next) {
     this.populate('students')
     next()
@@ -56,20 +94,18 @@ groupSchema.pre(["find", "findOne"], function (next) {
 
 
 /**
- * DELETE PRE/POST HOOKS
- */
-
-// Hook to "deep delete" group, i.e, delete all it's resources
-groupSchema.pre("deleteOne", { document: true, query: false }, async function (next) {
-    await Resource.deleteResourcesOfGroup(this.semester, this.groupNumber)
-
-    next()
-})
-
-
-/**
  * SAVE PRE/POST HOOKS
  */
+
+//Hook to assign mentor
+groupSchema.post('save', async function (doc, next) {
+    const groupInfo = {
+        semester: doc.semester,
+        groupNumber: doc.groupNumber
+    }
+
+    await Teacher.addMentorForGroup(doc.mentor, groupInfo)
+})
 
 // Hook to simplify 11000 error in mongodb
 groupSchema.post('save', (error, doc, next) => {
@@ -114,9 +150,34 @@ groupSchema.pre('updateOne', async function (next) {
         //Removing an old course
         const semester = Number(this.getQuery().semester)
         const groupNumber = Number(this.getQuery().groupNumber)
-        const teacherEmail = this.getUpdate().$pull.courses.teacherEmail
         const courseName = this.getUpdate().$pull.courses.courseName
 
+        const teacherInfo = await this.model.aggregate([
+            {
+                $match: {
+                    semester: semester,
+                    groupNumber: groupNumber
+                }
+            },
+            {
+                $unwind: "$courses"
+            },
+            {
+                $match: {
+                    "courses.courseName": courseName
+                }
+            },
+            {
+                $project: {
+                    teacherEmail: "$courses.teacherEmail"
+                }
+            },
+            {
+                $unset: "_id"
+            }
+        ])
+
+        const teacherEmail = teacherInfo[0].teacherEmail
         const courseInfo = {
             semester: semester,
             groupNumber: groupNumber,
@@ -137,30 +198,31 @@ groupSchema.pre('updateOne', async function (next) {
         const courseName = this.getQuery()["courses.courseName"]
         const newTeacherEmail = this.getUpdate().$set["courses.$.teacherEmail"]
 
-        const oldInfo = await this.model.aggregate([{
-            $match: {
-                semester: semester,
-                groupNumber: groupNumber
+        const oldInfo = await this.model.aggregate([
+            {
+                $match: {
+                    semester: semester,
+                    groupNumber: groupNumber
+                }
+            },
+            {
+                $unwind: "$courses"
+            },
+            {
+                $match: {
+                    "courses.courseName": courseName
+                }
+            },
+            {
+                $project: {
+                    teacherEmail: "$courses.teacherEmail"
+                }
+            },
+            {
+                $unset: "_id"
             }
-        },
-        {
-            $unwind: "$courses"
-        },
-        {
-            $match: {
-                "courses.courseName": courseName
-            }
-        },
-        {
-            $project: {
-                teacherEmail: "$courses.teacherEmail"
-            }
-        },
-        {
-            $unset: "_id"
-        }
         ])
-        
+
         const oldTeacherEmail = oldInfo[0].teacherEmail
 
         const courseInfo = {

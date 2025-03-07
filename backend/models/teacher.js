@@ -9,7 +9,8 @@ const teacherSchema = new mongoose.Schema({
     teacherEmail: {
         type: String,
         required: [true, "Please provide an e-mail"],
-        match: [/\S+@\S+\.\S+/, "Please use a valid email address"]
+        match: [/\S+@\S+\.\S+/, "Please use a valid email address"],
+        immutable: true
     },
 
     assignedCourses: {

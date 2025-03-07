@@ -70,12 +70,8 @@ Course.updateGroupInfo = async (semester, courseName, updates) => {
     }
 
     //Remove course from group
-    for (const groupTeacherInfo of removeGroupsFromCourse) {
-        await Group.removeCourse(semester, groupTeacherInfo.groupNumber,
-            {
-                courseName: courseName,
-                teacherEmail: groupTeacherInfo.teacherEmail
-            }
+    for (const groupNumber of removeGroupsFromCourse) {
+        await Group.removeCourse(semester, groupNumber, courseName
         )
     }
 
@@ -93,12 +89,11 @@ Course.updateGroupInfo = async (semester, courseName, updates) => {
 Course.deleteCourse = async (semester, name) => {
     const course = await Course.findOne({ semester: semester, courseName: name })
 
-    const result = await course.deleteOne()
-
-    if (result.deletedCount == 0) {
+    if (course === null) {
         throw new InvalidIdException("course")
     }
 
+    const result = await course.deleteOne()
     return result
 }
 

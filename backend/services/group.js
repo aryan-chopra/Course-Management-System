@@ -17,8 +17,8 @@ Group.createGroup = async (groupDoc) => {
  * GET 
  */
 
-Group.readGroup = async (semester, number) => {
-    const groupDoc = await Group.findOne({ semester: semester, groupNumber: number })
+Group.readGroup = async (semester, groupNumber) => {
+    const groupDoc = await Group.findOne({ semester: semester, groupNumber: groupNumber })
 
     if (groupDoc == null) {
         throw new InvalidIdException("group")
@@ -27,19 +27,45 @@ Group.readGroup = async (semester, number) => {
     return groupDoc
 }
 
-Group.readCourses = async (semester, number) => {
-    const group = await Group.readGroup(semester, number)
+Group.readCourses = async (semester, groupNumber) => {
+    const group = await Group.readGroup(semester, groupNumber)
 
     console.log(group)
 
     const allResources = []
 
-    for (const course of group.courses) {
-        const resources = await Resource.readResourcesOfGroupForCourse(semester, number, course);
+    for (const courseInfo of group.courses) {
+        const couseName = courseInfo.courseName
+        const resources = await Resource.readResourcesOfGroupForCourse(semester, groupNumber, courseName);
         allResources.push(...resources)
     }
 
     return allResources
+}
+
+Group.getGroupsWithCourse = async (semester, courseName) => {
+    const groupNumbers = await Group.aggregate([
+        {
+            $match: {
+                semester: semester
+            }
+        },
+        {
+            $unwind: "$courses"
+        },
+        {
+            $match: {
+                "courses.courseName": courseName
+            }
+        },
+        {
+            $project: {
+                groupNumber: "$groupNumber"
+            }
+        }
+    ])
+
+    return groupNumbers
 }
 
 Group.checkExistance = async (semester, groupNumber) => {
@@ -95,7 +121,7 @@ Group.addCourse = async (semester, groupNumber, courseTeacherInfo) => {
     )
 }
 
-Group.removeCourse = async (semester, groupNumber, courseTeacherInfo) => {
+Group.removeCourse = async (semester, groupNumber, courseName) => {
     Group.checkExistance(semester, groupNumber)
 
     await Group.updateOne(
@@ -104,7 +130,11 @@ Group.removeCourse = async (semester, groupNumber, courseTeacherInfo) => {
             groupNumber: groupNumber
         },
         {
-            $pull: { courses: courseTeacherInfo }
+            $pull: {
+                courses: {
+                    courseName: courseName
+                }
+            }
         },
         {
             runValidators: true

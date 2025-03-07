@@ -7,10 +7,6 @@ Teacher.createTeacher = async (teacherDoc) => {
 }
 
 Teacher.assignCourse = async (teacherEmail, courseInfo) => {
-    console.log("Updating teacher info")
-    console.log("Email: " + teacherEmail)
-    console.log("Info: " + courseInfo)
-
     await Teacher.updateOne(
         {
             teacherEmail: teacherEmail
@@ -31,6 +27,62 @@ Teacher.removeCourse = async (teacherEmail, courseInfo) => {
         },
         {
             $pull: { assignedCourses: courseInfo }
+        },
+        {
+            runValidators: true
+        }
+    )
+}
+
+Teacher.addMentorForGroup = async (teacherEmail, groupInfo) => {
+    await Teacher.updateOne(
+        {
+            teacherEmail: teacherEmail
+        },
+        {
+            $push: { mentorOf: groupInfo }
+        },
+        {
+            runValidators: true
+        }
+    )
+}
+
+Teacher.removeMentorForGroup = async (teacherEmail, groupInfo) => {
+    await Teacher.updateOne(
+        {
+            teacherEmail: teacherEmail
+        },
+        {
+            $pull: { mentorOf: groupInfo }
+        },
+        {
+            runValidators: true
+        }
+    )
+}
+
+Teacher.addCoordinatorForCourse = async (teacherEmail, courseInfo) => {
+    await Teacher.updateOne(
+        {
+            teacherEmail: teacherEmail
+        },
+        {
+            $push: { coordinatorOf: courseInfo }
+        },
+        {
+            runValidators: true
+        }
+    )
+}
+
+Teacher.removeCoordinatorForCourse = async (teacherEmail, courseInfo) => {
+    await Teacher.updateOne(
+        {
+            teacherEmail: teacherEmail
+        },
+        {
+            $pull: { coordinatorOf: courseInfo }
         },
         {
             runValidators: true
