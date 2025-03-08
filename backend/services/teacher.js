@@ -1,9 +1,27 @@
+import { InvalidIdException } from "../exceptions/idException.js";
 import Teacher from "../models/teacher.js";
 
 Teacher.createTeacher = async (teacherDoc) => {
     const teacher = new Teacher(teacherDoc)
 
     await teacher.save()
+}
+
+Teacher.getId = async (teacherEmail) => {
+    const teacherId = await Teacher.findOne(
+        {
+            teacherEmail: teacherEmail
+        },
+        {
+            _id: 1
+        }
+    )
+    
+    if (!teacherId) {
+        throw new InvalidIdException("teacher")
+    }
+
+    return teacherId._id.toHexString()
 }
 
 Teacher.assignCourse = async (teacherEmail, courseInfo) => {

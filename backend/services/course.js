@@ -1,21 +1,38 @@
 import { InvalidIdException } from "../exceptions/idException.js";
 import Course from "../models/course.js";
 import Group from "./group.js";
+import Teacher from "./teacher.js";
 
 Course.createCourse = async (courseDoc) => {
+    course.coordinator = await Teacher.getId(course.coordinator)
+
     const course = new Course(courseDoc)
 
     await course.save()
 }
 
-Course.readCourse = async (semester, name) => {
-    const course = await Course.findOne({ semester: semester, courseName: name })
+Course.readCourse = async (semester, courseName) => {
+    const course = await Course.findOne({ semester: semester, courseName: courseName })
 
     if (course == null) {
         throw new InvalidIdException("course")
     }
 
     return course
+}
+
+Course.getId = async (semester, courseName) => {
+    const courseId = await Course.findOne(
+        {
+            semester: semester,
+            courseName: courseName
+        },
+        {
+            _id: 1
+        }
+    )
+
+    return courseId._id
 }
 
 Course.checkExistance = async (semester, courseName) => {
@@ -26,11 +43,9 @@ Course.checkExistance = async (semester, courseName) => {
         }
     )
 
-    if (exists === null) {
-        console.log("Does not exist")
+    if (!exists) {
         throw new InvalidIdException("course")
     }
-    console.log(exists)
 }
 
 Course.updateCourse = async (semester, courseName, update) => {
@@ -75,7 +90,7 @@ Course.updateGroupInfo = async (semester, courseName, updates) => {
         )
     }
 
-    //Delete course from group
+    //Change teacher of course in group
     for (const groupTeacherInfo of changeTeacherOfGroupsInCourse) {
         await Group.changeTeacherOfCourse(semester, groupTeacherInfo.groupNumber,
             {
@@ -89,7 +104,7 @@ Course.updateGroupInfo = async (semester, courseName, updates) => {
 Course.deleteCourse = async (semester, name) => {
     const course = await Course.findOne({ semester: semester, courseName: name })
 
-    if (course === null) {
+    if (!course) {
         throw new InvalidIdException("course")
     }
 

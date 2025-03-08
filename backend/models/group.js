@@ -1,6 +1,7 @@
-import mongoose, { mongo } from "mongoose";
+import mongoose from "mongoose";
 import Resource from "../services/resource.js";
 import Teacher from "../services/teacher.js";
+import Course from "./course.js";
 
 const groupSchema = new mongoose.Schema({
     groupNumber: {
@@ -16,15 +17,24 @@ const groupSchema = new mongoose.Schema({
     },
 
     mentor: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Teacher',
         required: [true, "Mentor is required"]
     },
 
     courses: {
-        type: [{
-            courseName: String,
-            teacherEmail: String
-        }]
+        type: [
+            {
+                course: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: 'Course'
+                },
+                teacher: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: 'Teacher'
+                }
+            }
+        ]
     }
 },
     {
@@ -35,60 +45,25 @@ const groupSchema = new mongoose.Schema({
     })
 
 groupSchema.index({ semester: 1, groupNumber: 1 }, { unique: true })
-
+groupSchema.index({ "courses.teacher": 1 })
 
 // Virtual to populate students of a group
-
 groupSchema.virtual('students', {
     ref: 'student',
     localField: ["semester", "groupNumber"],
-    foreignField: ["semester", "group"]
-    // match: (student) => ({ semester: student.semester })
+    foreignField: ["semester", "groupNumber"]
 })
-
 
 
 /**
  * DELETE PRE/POST HOOKS
  */
 
-//Hook to remove mentor and group resources
+//Hook to remove group resources
 groupSchema.post('deleteOne', { document: true, query: false }, async function (doc, next) {
-    const groupInfo = {
-        semester: this.semester,
-        groupNumber: this.groupNumber
-    }
-
-    //Removing mentor
-    await Teacher.removeMentorForGroup(this.mentor, groupInfo)
-
     //Deleting resources
     await Resource.deleteResourcesOfGroup(this.semester, this.groupNumber)
 
-    //Removing course from teacher
-    for (const courseInfo of this.courses) {
-        const courseDoc = {
-            semester: this.semester,
-            groupNumber: this.groupNumber,
-            courseName: courseInfo.courseName
-        }
-
-        const teacherEmail = courseInfo.teacherEmail
-
-        await Teacher.removeCourse(teacherEmail, courseDoc)
-    }
-
-    next()
-})
-
-
-/**
- * FIND/FINDONE PRE/POST HOOKS
- */
-
-//Hook to populate students
-groupSchema.pre(["find", "findOne"], function (next) {
-    this.populate('students')
     next()
 })
 
@@ -97,14 +72,13 @@ groupSchema.pre(["find", "findOne"], function (next) {
  * SAVE PRE/POST HOOKS
  */
 
-//Hook to assign mentor
-groupSchema.post('save', async function (doc, next) {
-    const groupInfo = {
-        semester: doc.semester,
-        groupNumber: doc.groupNumber
+// Hook to replace teacher e-mail with teacher id before saving old doc
+groupSchema.pre('save', async function (next) {
+    if (!this.isNew && this.isModified("mentor")) {
+        this.mentor = await Teacher.getId(this.mentor)
     }
 
-    await Teacher.addMentorForGroup(doc.mentor, groupInfo)
+    next()
 })
 
 // Hook to simplify 11000 error in mongodb
@@ -121,118 +95,67 @@ groupSchema.post('save', (error, doc, next) => {
  * UPDATE PRE/POST HOOKS
  */
 
-//Assign course to teacher in case of a push operation to courses
-groupSchema.pre('updateOne', async function (next) {
-    if (this.getUpdate().$push !== undefined) {
-        console.log("In push")
-
-        //Adding a new course
-        const semester = Number(this.getQuery().semester)
-        const groupNumber = Number(this.getQuery().groupNumber)
-        const teacherEmail = this.getUpdate().$push.courses.teacherEmail
-        const courseName = this.getUpdate().$push.courses.courseName
-
-        const courseInfo = {
-            semester: semester,
-            groupNumber: groupNumber,
-            courseName: courseName
-        }
-
-        await Teacher.assignCourse(teacherEmail, courseInfo)
+// Hook to replace mentor e-mail with Id in case of update operations
+groupSchema.pre(['findOneAndUpdate', 'updateOne', 'updateMany'], async function (next) {
+    if (this.getUpdate().mentor !== undefined) {
+        this.getUpdate().mentor = await Teacher.getId(this.getUpdate().mentor)
     }
 
     next()
 })
 
-//Remove course from teacher in case of a pull operation
+// Hook to replace courseName and teacherEmail with object Ids for push operation
+groupSchema.pre('updateOne', async function (next) {
+    if (this.getUpdate().$push !== undefined) {
+        //Adding a new course
+        const semester = Number(this.getQuery().semester)
+        const teacherEmail = this.getUpdate().$push.courses.teacherEmail
+        const courseName = this.getUpdate().$push.courses.courseName
+
+        const courseId = await Course.getId(semester, courseName)
+        const teacherId = await Teacher.getId(teacherEmail)
+
+        delete this.getUpdate().$push.courses.teacherEmail
+        this.getUpdate().$push.courses.teacher = teacherId
+
+        delete this.getUpdate().$push.courses.courseName
+        this.getUpdate().$push.courses.course = courseId
+    }
+
+    next()
+})
+
+// Hook to replace courseName and teaherEmail with objectIds for pull operation
 groupSchema.pre('updateOne', async function (next) {
     if (this.getUpdate().$pull !== undefined) {
         //Removing an old course
         const semester = Number(this.getQuery().semester)
-        const groupNumber = Number(this.getQuery().groupNumber)
         const courseName = this.getUpdate().$pull.courses.courseName
 
-        const teacherInfo = await this.model.aggregate([
-            {
-                $match: {
-                    semester: semester,
-                    groupNumber: groupNumber
-                }
-            },
-            {
-                $unwind: "$courses"
-            },
-            {
-                $match: {
-                    "courses.courseName": courseName
-                }
-            },
-            {
-                $project: {
-                    teacherEmail: "$courses.teacherEmail"
-                }
-            },
-            {
-                $unset: "_id"
-            }
-        ])
+        const courseId = await Course.getId(semester, courseName)
 
-        const teacherEmail = teacherInfo[0].teacherEmail
-        const courseInfo = {
-            semester: semester,
-            groupNumber: groupNumber,
-            courseName: courseName
-        }
-
-        await Teacher.removeCourse(teacherEmail, courseInfo)
+        this.getUpdate().$pull.courses.course = courseId
+        delete this.getUpdate().$pull.courses.courseName
     }
 
     next()
 })
 
-//Remove course access from old teacher, and add course to new teacher 
+// Hook to replace teacherEmail and courseName with object Ids
 groupSchema.pre('updateOne', async function (next) {
     if (this.getUpdate().$set !== undefined) {
         const semester = Number(this.getQuery().semester)
-        const groupNumber = Number(this.getQuery().groupNumber)
         const courseName = this.getQuery()["courses.courseName"]
-        const newTeacherEmail = this.getUpdate().$set["courses.$.teacherEmail"]
+        const teacherEmail = this.getUpdate().$set["courses.$.teacherEmail"]
 
-        const oldInfo = await this.model.aggregate([
-            {
-                $match: {
-                    semester: semester,
-                    groupNumber: groupNumber
-                }
-            },
-            {
-                $unwind: "$courses"
-            },
-            {
-                $match: {
-                    "courses.courseName": courseName
-                }
-            },
-            {
-                $project: {
-                    teacherEmail: "$courses.teacherEmail"
-                }
-            },
-            {
-                $unset: "_id"
-            }
-        ])
+        const courseId = await Course.getId(semester, courseName)
+        const teacherId = await Teacher.getId(teacherEmail)
 
-        const oldTeacherEmail = oldInfo[0].teacherEmail
+        this.getQuery()["courses.course"] = courseId
+        delete this.getQuery()["courses.courseName"]
 
-        const courseInfo = {
-            semester: semester,
-            groupNumber: groupNumber,
-            courseName: courseName
-        }
-
-        await Teacher.removeCourse(oldTeacherEmail, courseInfo)
-        await Teacher.assignCourse(newTeacherEmail, courseInfo)
+        this.getUpdate().$set["courses.$.teacher"] = teacherId
+        delete this.getUpdate().$set["courses.$.teacherEmail"]
     }
 
     next()

@@ -1,12 +1,16 @@
 import { InvalidIdException } from "../exceptions/idException.js";
 import Group from "../models/group.js";
 import Resource from "./resource.js";
+import Teacher from "./teacher.js";
 
 /**
  * POST
  */
 
 Group.createGroup = async (groupDoc) => {
+    const teacherId = await Teacher.getId(groupDoc.mentor)
+    groupDoc.mentor = teacherId
+
     const group = new Group(groupDoc)
 
     await group.save()
@@ -27,23 +31,27 @@ Group.readGroup = async (semester, groupNumber) => {
     return groupDoc
 }
 
-Group.readCourses = async (semester, groupNumber) => {
-    const group = await Group.readGroup(semester, groupNumber)
-
-    console.log(group)
+Group.readResources = async (semester, groupNumber) => {
+    const coursesInfo = await Group.findOne(
+        {
+            semester: semester,
+            groupNumber: groupNumber
+        },
+        "courses"
+    )
 
     const allResources = []
 
-    for (const courseInfo of group.courses) {
-        const couseName = courseInfo.courseName
-        const resources = await Resource.readResourcesOfGroupForCourse(semester, groupNumber, courseName);
+    for (const courseInfo of coursesInfo.courses) {
+        const courseId = courseInfo.course
+        const resources = await Resource.readResourcesOfGroupForCourse(semester, groupNumber, courseId);
         allResources.push(...resources)
     }
 
     return allResources
 }
 
-Group.getGroupsWithCourse = async (semester, courseName) => {
+Group.getGroupsWithCourse = async (semester, courseId) => {
     const groupNumbers = await Group.aggregate([
         {
             $match: {
@@ -55,7 +63,7 @@ Group.getGroupsWithCourse = async (semester, courseName) => {
         },
         {
             $match: {
-                "courses.courseName": courseName
+                "courses.course": courseId
             }
         },
         {
@@ -76,7 +84,7 @@ Group.checkExistance = async (semester, groupNumber) => {
         }
     )
 
-    if (exists === null) {
+    if (!exists) {
         throw new InvalidIdException("group")
     }
 }
@@ -85,11 +93,13 @@ Group.checkExistance = async (semester, groupNumber) => {
  * PUT 
  */
 
-Group.updateGroup = async (semester, number, update) => {
+Group.updateGroup = async (semester, groupNumber, update) => {
+    await Group.checkExistance(semester, groupNumber)
+
     const groupDoc = await Group.findOneAndUpdate(
         {
             semester: semester,
-            groupNumber: number
+            groupNumber: groupNumber
         },
         { update },
         {
@@ -97,15 +107,11 @@ Group.updateGroup = async (semester, number, update) => {
             returnDocument: "after"
         })
 
-    if (groupDoc == null) {
-        throw new InvalidIdException("group")
-    }
-
     return groupDoc
 }
 
 Group.addCourse = async (semester, groupNumber, courseTeacherInfo) => {
-    Group.checkExistance(semester, groupNumber)
+    await Group.checkExistance(semester, groupNumber)
 
     await Group.updateOne(
         {
@@ -122,7 +128,7 @@ Group.addCourse = async (semester, groupNumber, courseTeacherInfo) => {
 }
 
 Group.removeCourse = async (semester, groupNumber, courseName) => {
-    Group.checkExistance(semester, groupNumber)
+    await Group.checkExistance(semester, groupNumber)
 
     await Group.updateOne(
         {
@@ -143,7 +149,7 @@ Group.removeCourse = async (semester, groupNumber, courseName) => {
 }
 
 Group.changeTeacherOfCourse = async (semester, groupNumber, courseTeacherInfo) => {
-    Group.checkExistance(semester, groupNumber)
+    await Group.checkExistance(semester, groupNumber)
 
     await Group.updateOne(
         {
@@ -167,8 +173,8 @@ Group.changeTeacherOfCourse = async (semester, groupNumber, courseTeacherInfo) =
  * DELETE 
  */
 
-Group.deleteGroup = async (semester, number) => {
-    const group = await Group.findOne({ semester: semester, groupNumber: number })
+Group.deleteGroup = async (semester, groupNumber) => {
+    const group = await Group.findOne({ semester: semester, groupNumber: groupNumber })
 
     if (group == null) {
         throw new InvalidIdException("group")

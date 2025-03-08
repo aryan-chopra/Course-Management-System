@@ -14,20 +14,20 @@ const studentSchema = new mongoose.Schema({
         required: [true, "Student name is required"],
     },
 
-    group: {
-        type: Number,
-    },
-
     semester: {
         type: Number,
         required: [true, "Student must have a semester"]
+    },
+
+    groupNumber: {
+        type: Number,
     }
 },
     {
         collection: 'students'
     })
 
-studentSchema.index({ semester: 1, group: 1 }, { unique: true })
+studentSchema.index({ semester: 1, groupNumber: 1 })
 
 const Student = mongoose.model('student', studentSchema)
 
