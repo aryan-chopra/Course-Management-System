@@ -1,7 +1,12 @@
 import { InvalidIdException } from "../exceptions/idException.js";
 import Resource from "../models/resource.js";
+import Course from "./course.js";
+import Teacher from "./teacher.js";
 
 Resource.createResource = async (resourceDoc) => {
+    resourceDoc.course = await Course.getId(resourceDoc.semester, resourceDoc.course)
+    resourceDoc.author = await Teacher.getId(resourceDoc.author)
+
     const resource = new Resource(resourceDoc)
 
     await resource.save()
@@ -62,7 +67,7 @@ Resource.updateResource = async (resourceId, update) => {
         update
     )
 
-    if (resource == null) {
+    if (!resource) {
         throw InvalidIdException("resource")
     }
 

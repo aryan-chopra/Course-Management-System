@@ -18,15 +18,24 @@ const resourceSchema = new mongoose.Schema({
     },
 
     course: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'course', 
         required: true,
         immutable: true
     },
 
     author: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
+        refPath: 'authorType',
         required: true,
         immutable: true
+    },
+
+    authorType: {
+        type: String,
+        required: true,
+        immutable: true,
+        enum: ['teacher', 'mentor', 'coordinator']
     },
 
     title: {
