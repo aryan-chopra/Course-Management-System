@@ -1,6 +1,8 @@
 import { InvalidIdException } from "../exceptions/idException.js";
+import { UnauthorisedException } from "../exceptions/unauthorisedException.js";
 import Course from "../models/course.js";
 import Group from "./group.js";
+import Resource from "./resource.js";
 import Teacher from "./teacher.js";
 
 Course.createCourse = async (courseDoc) => {
@@ -9,6 +11,28 @@ Course.createCourse = async (courseDoc) => {
     const course = new Course(courseDoc)
 
     await course.save()
+}
+
+Course.createResource = async (semester, courseName, authorEmail, resourceDoc) => {
+    const authorId = await Teacher.getId(authorEmail)
+
+    const courseDoc = await Course.findOne(
+        {
+            semester: semester,
+            courseName: courseName
+        },
+        "coordinator"
+    )
+
+    if (!courseDoc) {
+        throw new InvalidIdException("course")
+    }
+
+    if (!courseDoc.coordinator.equals(authorId)) {
+        throw new UnauthorisedException()
+    }
+
+    await Resource.createResource(resourceDoc)
 }
 
 Course.readCourse = async (semester, courseName) => {
