@@ -1,4 +1,4 @@
-import { InvalidIdException } from "../exceptions/idException.js";
+import { BadRequestException } from "../exceptions/badRequest.js";
 import Teacher from "../models/teacher.js";
 
 Teacher.createTeacher = async (teacherDoc) => {
@@ -18,7 +18,7 @@ Teacher.getId = async (teacherEmail) => {
     )
     
     if (!teacherId) {
-        throw new InvalidIdException("teacher")
+        throw new BadRequestException("teacher")
     }
 
     return teacherId._id.toHexString()

@@ -6,7 +6,9 @@ import Resource from "./resource.js";
 import Teacher from "./teacher.js";
 
 Course.createCourse = async (courseDoc) => {
-    course.coordinator = await Teacher.getId(course.coordinator)
+    courseDoc.coordinator = await Teacher.getId(courseDoc.coordinator)
+
+    console.log(courseDoc.coordinator)
 
     const course = new Course(courseDoc)
 
@@ -36,7 +38,17 @@ Course.createResource = async (semester, courseName, authorEmail, resourceDoc) =
 }
 
 Course.readCourse = async (semester, courseName) => {
-    const course = await Course.findOne({ semester: semester, courseName: courseName })
+    const course = await Course.findOne(
+        {
+            semester: semester,
+            courseName: courseName
+        },
+        '-_id -__v'
+    )
+        .populate(
+            'coordinator',
+            'name teacherEmail -_id'
+        )
 
     if (course == null) {
         throw new InvalidIdException("course")
@@ -75,20 +87,24 @@ Course.checkExistance = async (semester, courseName) => {
 Course.updateCourse = async (semester, courseName, update) => {
     await Course.checkExistance(semester, courseName)
 
-    await Course.updateOne(
+    console.log(semester + ", " + courseName)
+
+    const d = await Course.readCourse(semester, courseName)
+    console.log(d)
+
+    const res = await Course.updateOne(
         {
             semester: semester,
             courseName: courseName
         },
         {
-            update
-        },
-        {
-            runValidators: true
+            ...update
         }
     )
 
-    return course
+    console.log(res)
+
+    // return course
 }
 
 Course.updateGroupInfo = async (semester, courseName, updates) => {

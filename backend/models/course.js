@@ -10,8 +10,8 @@ import Group from "./group.js";
 const courseSchema = new mongoose.Schema({
     courseName: {
         type: String,
-        required: true,
-        immutable: true
+        required: true
+        // immutable: true
     },
 
     semester: {
@@ -22,7 +22,7 @@ const courseSchema = new mongoose.Schema({
 
     coordinator: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Teacher',
+        ref: 'teacher',
         required: true
     }
 },
@@ -77,8 +77,13 @@ courseSchema.pre("save", async function (next) {
  */
 
 courseSchema.pre(['findOneAndUpdate', 'updateOne', 'updateMany'], async function (next) {
+    console.log("Updating")
+
+    console.log(this.getUpdate())
+
     if (this.getUpdate().coordinator) {
         this.getUpdate().coordinator = await Teacher.getId(this.getUpdate().coordinator)
+        console.log(this.getUpdate())
     }
 
     next()
