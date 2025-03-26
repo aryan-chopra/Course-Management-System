@@ -22,7 +22,17 @@ Group.createGroup = async (groupDoc) => {
  */
 
 Group.readGroup = async (semester, groupNumber) => {
-    const groupDoc = await Group.findOne({ semester: semester, groupNumber: groupNumber })
+    const groupDoc = await Group.findOne(
+        {
+            semester: semester,
+            groupNumber: groupNumber
+        },
+        {
+            _id: 0,
+            __v: 0
+        }
+    )
+    .populate('students')
 
     if (groupDoc == null) {
         throw new InvalidIdException("group")
