@@ -28,7 +28,13 @@ const courseSchema = new mongoose.Schema({
 },
     {
         collection: 'courses',
-        minimize: false
+        minimize: false,
+        toJSON: {
+            transform: function(doc, ret) {
+                delete ret._id
+                delete ret.id
+            }
+        }
     })
 
 courseSchema.index({ semester: 1, courseName: 1 }, { unique: true })

@@ -18,20 +18,21 @@ const groupSchema = new mongoose.Schema({
 
     mentor: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Teacher',
+        ref: 'teacher',
         required: [true, "Mentor is required"]
     },
 
     courses: {
         type: [
             {
+                _id: false,
                 course: {
                     type: mongoose.Schema.Types.ObjectId,
-                    ref: 'Course'
+                    ref: 'course'
                 },
                 teacher: {
                     type: mongoose.Schema.Types.ObjectId,
-                    ref: 'Teacher'
+                    ref: 'teacher'
                 }
             }
         ]
@@ -40,12 +41,19 @@ const groupSchema = new mongoose.Schema({
     {
         collection: 'groups',
         minimize: false,
-        toJSON: { virtuals: true },
+        toJSON: {
+            virtuals: true,
+
+            transform: function (doc, ret) {
+                delete ret.id
+            }
+        },
         toObject: { virtuals: true }
     })
 
 groupSchema.index({ semester: 1, groupNumber: 1 }, { unique: true })
 groupSchema.index({ "courses.teacher": 1 })
+groupSchema.index({ semester: 1, "courses.course": 1 })
 
 // Virtual to populate students of a group
 groupSchema.virtual('students', {
