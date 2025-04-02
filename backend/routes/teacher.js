@@ -1,6 +1,6 @@
 import express from "express"
-import { createTeacher } from "../controllers/teacher.js"
 import { authenticate } from "../middlewares/authenticate.js"
+import { readTeacher } from "../controllers/teacher.js"
 
 const TeacherRoutes = express()
 
@@ -10,6 +10,6 @@ TeacherRoutes.get('/', async (req, res, next) => {
     res.send("Viewing teacher home page")
 })
 
-TeacherRoutes.post('/create', createTeacher)
+TeacherRoutes.get('/view', readTeacher)
 
 export default TeacherRoutes

@@ -6,6 +6,7 @@ import Teacher from "../services/teacher.js";
 import { InvalidCredentialsException } from "../exceptions/invalidCredentialsException.js";
 import { UnauthorisedException } from "../exceptions/unauthorisedException.js";
 import { InvalidIdException } from "../exceptions/idException.js";
+import { BadRequestException } from "../exceptions/badRequest.js";
 
 User.createUser = async function (userInfo) {
     const hashedPassword = await bcrypt.hash(userInfo.password, 10)
@@ -72,13 +73,34 @@ User.login = async function (userInfo) {
     return token
 }
 
+User.getId = async function (email) {
+    const userDoc = await User.findOne(
+        {
+            email: email
+        },
+        "_id"
+    )
+
+    if (!userDoc) {
+        throw new BadRequestException("user")
+    }
+
+    return userDoc._id.toHexString()
+}
+
+User.getUserDoc = async function (email) {
+    const doc = await User.findOne({ email: email })
+
+    return doc
+}
+
 User.deleteUser = async function (user, email) {
     if (user.role !== 'admin') {
         console.log(user)
         throw new UnauthorisedException()
     }
-    
-    const userToDelete = await User.findOne({email: email})
+
+    const userToDelete = await User.findOne({ email: email })
 
     if (!userToDelete) {
         throw new InvalidIdException("user")

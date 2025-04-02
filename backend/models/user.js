@@ -35,7 +35,16 @@ const userSchema = new mongoose.Schema({
     },
 },
     {
-        collection: 'users'
+        collection: 'users',
+        toJSON: {
+            virtuals: true,
+
+            transform: function(doc, ret) {
+                delete ret._id
+            }
+        },
+        toObject: { virtuals: true },
+        id: false
     })
 
 userSchema.virtual('userInfo', {
@@ -68,7 +77,7 @@ userSchema.pre('deleteOne', { document: true, query: false }, async function (ne
     } else if (this.role === 'teacher') {
         await Teacher.deleteTeacher(this._id)
     }
-    
+
     next()
 })
 

@@ -1,17 +1,6 @@
 import Student from "../services/student.js"
 import { StatusCodes } from "http-status-codes"
 
-export const createStudent = async (req, res, next) => {
-    try {
-        const studentDoc = req.body
-
-        await Student.createStudent(studentDoc)
-        res.status(StatusCodes.OK).send()
-    } catch (error) {
-        next(error)
-    }
-}
-
 export const readStudent = async (req, res, next) => {
     try {
         const rollnumber = req.params.rollnumber

@@ -1,13 +1,15 @@
 import Teacher from "../services/teacher.js"
 import { StatusCodes } from "http-status-codes"
 
-export const createTeacher = async (req, res, next) => {
-    try {
-        const teacherDoc = req.body
+export const readTeacher = async (req, res, next) => {
 
-        await Teacher.createTeacher(teacherDoc)
-    
-        res.status(StatusCodes.OK).send()
+    try {
+        const email = req.body.email
+        const user = req.user
+
+        const teacher = await Teacher.readTeacher(user, email)
+
+        res.status(StatusCodes.OK).json({ teacher: teacher })
     } catch (error) {
         next(error)
     }

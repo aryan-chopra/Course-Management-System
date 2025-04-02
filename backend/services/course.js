@@ -1,11 +1,16 @@
 import { InvalidIdException } from "../exceptions/idException.js";
 import { UnauthorisedException } from "../exceptions/unauthorisedException.js";
 import Course from "../models/course.js";
+import User from "./user.js";
 import Group from "./group.js";
 import Resource from "./resource.js";
 import Teacher from "./teacher.js";
 
-Course.createCourse = async (courseDoc) => {
+Course.createCourse = async (user, courseDoc) => {
+    if (user.role !== 'admin') {
+        throw new UnauthorisedException()
+    }
+
     courseDoc.coordinator = await Teacher.getId(courseDoc.coordinator)
 
     console.log(courseDoc.coordinator)
@@ -15,8 +20,10 @@ Course.createCourse = async (courseDoc) => {
     await course.save()
 }
 
-Course.createResource = async (semester, courseName, authorEmail, resourceDoc) => {
-    const authorId = await Teacher.getId(authorEmail)
+Course.createResource = async (user, semester, courseName, resourceDoc) => {
+    if (user.role !== 'admin' && user.role !== 'teacher') {
+        throw new UnauthorisedException()
+    }
 
     const courseDoc = await Course.findOne(
         {
@@ -30,14 +37,52 @@ Course.createResource = async (semester, courseName, authorEmail, resourceDoc) =
         throw new InvalidIdException("course")
     }
 
-    if (!courseDoc.coordinator.equals(authorId)) {
-        throw new UnauthorisedException()
+    let authorId
+
+    if (user.role === 'admin') {
+        authorId = await User.getId(user.email)
+    } else if (user.role === 'teacher') {
+        authorId = await Teacher.getId(user.email)
+
+        if (courseDoc.coordinator.equals(authorId) == false) {
+            throw new UnauthorisedException()
+        }
     }
+
+    resourceDoc.author = authorId
 
     await Resource.createResource(resourceDoc)
 }
 
-Course.readCourse = async (semester, courseName) => {
+Course.getCoordinatorEmail = async (semester, courseName) => {
+    const course = await Course.findOne(
+        {
+            semester: semester,
+            courseName: courseName
+        },
+        "_id"
+    )
+        .populate({
+            path: 'coordinator',
+            populate: {
+                path: 'info'
+            }
+        })
+
+    if (!course) {
+        throw new InvalidIdException("course")
+    }
+
+    return course.coordinator.info.email
+}
+
+Course.readCourse = async (user, semester, courseName) => {
+    if (user.role !== 'admin' && user.role !== 'teacher') {
+        console.log("Expected: admin or user | Got: " + user.role)
+
+        throw new UnauthorisedException()
+    }
+
     const course = await Course.findOne(
         {
             semester: semester,
@@ -45,13 +90,22 @@ Course.readCourse = async (semester, courseName) => {
         },
         '-_id -__v'
     )
-        .populate(
-            'coordinator',
-            'name teacherEmail -_id'
-        )
+        .populate({
+            path: 'coordinator',
+            populate: {
+                path: 'info'
+            }
+        })
 
-    if (course == null) {
+    if (!course) {
         throw new InvalidIdException("course")
+    }
+
+    if (user.role === 'teacher') {
+        if (course.coordinator.info.email !== user.email) {
+            console.log("Teacher not authorized")
+            throw new UnauthorisedException()
+        }
     }
 
     return course
@@ -84,13 +138,19 @@ Course.checkExistance = async (semester, courseName) => {
     }
 }
 
-Course.updateCourse = async (semester, courseName, update) => {
-    await Course.checkExistance(semester, courseName)
+Course.updateCourse = async (user, semester, courseName, update) => {
+    if (user.role !== 'admin' && user.role !== 'teacher') {
+        console.log("Role: " + user.role)
+        throw new UnauthorisedException()
+    }
 
-    console.log(semester + ", " + courseName)
+    if (user.role === 'teacher') {
+        const coordinator = await Course.getCoordinatorEmail(semester, courseName)
 
-    const d = await Course.readCourse(semester, courseName)
-    console.log(d)
+        if (coordinator !== user.email) {
+            throw new UnauthorisedException()
+        }
+    }
 
     const res = await Course.updateOne(
         {
@@ -107,7 +167,11 @@ Course.updateCourse = async (semester, courseName, update) => {
     // return course
 }
 
-Course.updateGroupInfo = async (semester, courseName, updates) => {
+Course.updateGroupInfo = async (user, semester, courseName, updates) => {
+    if (user.role !== 'admin') {
+        throw new UnauthorisedException()
+    }
+
     await Course.checkExistance(semester, courseName)
 
     const addGroupsToCourse = updates.addGroupsToCourse
@@ -141,7 +205,11 @@ Course.updateGroupInfo = async (semester, courseName, updates) => {
     }
 }
 
-Course.deleteCourse = async (semester, name) => {
+Course.deleteCourse = async (user, semester, name) => {
+    if (user.role !== 'admin') {
+        throw new UnauthorisedException()
+    }
+
     const course = await Course.findOne({ semester: semester, courseName: name })
 
     if (!course) {
