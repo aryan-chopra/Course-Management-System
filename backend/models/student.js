@@ -24,6 +24,7 @@ const studentSchema = new mongoose.Schema({
 
     groupNumber: {
         type: Number,
+        required: [true, "Student must have a group"]
     }
 },
     {

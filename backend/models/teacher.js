@@ -1,15 +1,14 @@
 import mongoose from "mongoose";
 
 const teacherSchema = new mongoose.Schema({
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: [true, "User ID is required"],
+    },
+
     name: {
         type: String,
         required: [true, "Please provide a name"],
-    },
-
-    teacherEmail: {
-        type: String,
-        required: [true, "Please provide an e-mail"],
-        match: [/\S+@\S+\.\S+/, "Please use a valid email address"]
     }
 },
     {
@@ -17,7 +16,7 @@ const teacherSchema = new mongoose.Schema({
         minimize: false
     })
 
-teacherSchema.index({ teacherEmail: 1 }, { unique: true })
+teacherSchema.index({ userId: 1 }, { unique: true })
 
 const Teacher = mongoose.model('teacher', teacherSchema)
 

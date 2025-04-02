@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+import Student from "../services/student.js";
+import Teacher from "../services/teacher.js";
 
 const userSchema = new mongoose.Schema({
     email: {
@@ -6,10 +8,12 @@ const userSchema = new mongoose.Schema({
         required: [true, "Please provide an e-mail"],
         validate: {
             validator: function (email) {
-                return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(v)
+                return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email)
             },
             message: "Please provide a valid e-mail address"
-        }
+        },
+        index: true,
+        unique: [true, "E-mail already in use"]
     },
 
     password: {
@@ -58,7 +62,15 @@ userSchema.virtual('userInfo', {
     }
 })
 
-userSchema.index({ email: 1 }, { unique: true })
+userSchema.pre('deleteOne', { document: true, query: false }, async function (next) {
+    if (this.role === 'student') {
+        await Student.deleteStudent(this._id)
+    } else if (this.role === 'teacher') {
+        await Teacher.deleteTeacher(this._id)
+    }
+    
+    next()
+})
 
 const User = mongoose.model('user', userSchema)
 

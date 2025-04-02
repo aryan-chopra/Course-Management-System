@@ -1,5 +1,6 @@
 import { BadRequestException } from "../exceptions/badRequest.js";
 import Teacher from "../models/teacher.js";
+import User from "../models/user.js";
 
 Teacher.createTeacher = async (teacherDoc) => {
     const teacher = new Teacher(teacherDoc)
@@ -8,104 +9,26 @@ Teacher.createTeacher = async (teacherDoc) => {
 }
 
 Teacher.getId = async (teacherEmail) => {
-    const teacherId = await Teacher.findOne(
-        {
-            teacherEmail: teacherEmail
-        },
-        {
-            _id: 1
-        }
-    )
-    
-    if (!teacherId) {
+    const user = await User.getUserDoc(teacherEmail)
+
+    if (!user) {
+        throw new BadRequestException("teacher")
+    }
+    if (user.role !== 'teacher') {
         throw new BadRequestException("teacher")
     }
 
-    return teacherId._id.toHexString()
-}
-
-Teacher.assignCourse = async (teacherEmail, courseInfo) => {
-    await Teacher.updateOne(
+    const teacher = await Teacher.findOne(
         {
-            teacherEmail: teacherEmail
-        },
-        {
-            $push: { assignedCourses: courseInfo }
-        },
-        {
-            runValidators: true
+            userId: user._id
         }
     )
+
+    return teacher._id.toHexString()
 }
 
-Teacher.removeCourse = async (teacherEmail, courseInfo) => {
-    await Teacher.updateOne(
-        {
-            teacherEmail: teacherEmail
-        },
-        {
-            $pull: { assignedCourses: courseInfo }
-        },
-        {
-            runValidators: true
-        }
-    )
-}
-
-Teacher.addMentorForGroup = async (teacherEmail, groupInfo) => {
-    await Teacher.updateOne(
-        {
-            teacherEmail: teacherEmail
-        },
-        {
-            $push: { mentorOf: groupInfo }
-        },
-        {
-            runValidators: true
-        }
-    )
-}
-
-Teacher.removeMentorForGroup = async (teacherEmail, groupInfo) => {
-    await Teacher.updateOne(
-        {
-            teacherEmail: teacherEmail
-        },
-        {
-            $pull: { mentorOf: groupInfo }
-        },
-        {
-            runValidators: true
-        }
-    )
-}
-
-Teacher.addCoordinatorForCourse = async (teacherEmail, courseInfo) => {
-    await Teacher.updateOne(
-        {
-            teacherEmail: teacherEmail
-        },
-        {
-            $push: { coordinatorOf: courseInfo }
-        },
-        {
-            runValidators: true
-        }
-    )
-}
-
-Teacher.removeCoordinatorForCourse = async (teacherEmail, courseInfo) => {
-    await Teacher.updateOne(
-        {
-            teacherEmail: teacherEmail
-        },
-        {
-            $pull: { coordinatorOf: courseInfo }
-        },
-        {
-            runValidators: true
-        }
-    )
+Teacher.deleteTeacher = async (id) => {
+    await Teacher.deleteOne({ userId: id })
 }
 
 export default Teacher

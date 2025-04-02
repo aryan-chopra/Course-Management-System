@@ -19,8 +19,12 @@ Student.readStudent = async (rollnumber) => {
 }
 
 Student.readCourses = async (semester, group) => {
-    const resources = Group.readCourses(semester, group)
+    const resources = await Group.readCourses(semester, group)
     return resources
+}
+
+Student.deleteStudent = async (id) => {
+    await Student.deleteOne({ userId: id })
 }
 
 export default Student

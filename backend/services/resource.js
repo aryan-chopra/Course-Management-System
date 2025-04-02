@@ -1,37 +1,37 @@
 import { InvalidIdException } from "../exceptions/idException.js";
 import Resource from "../models/resource.js";
+import User from "../models/user.js";
 import Course from "./course.js";
-import Teacher from "./teacher.js";
 
 Resource.createResource = async (resourceDoc) => {
     resourceDoc.course = await Course.getId(resourceDoc.semester, resourceDoc.course)
-    resourceDoc.author = await Teacher.getId(resourceDoc.author)
+    resourceDoc.author = await User.getId(resourceDoc.author)
 
     const resource = new Resource(resourceDoc)
 
     await resource.save()
 }
 
-Resource.readDepartmentCourses = async (semester, course) => {
-    const departmentCourses = await Resource.find({
+Resource.readDepartmentResources = async (semester, course) => {
+    const departmentResources = await Resource.find({
         semester: semester,
         group: null,
         course: course
     })
 
-    return departmentCourses
+    return departmentResources
 }
 
 Resource.readResourcesOfGroupForCourse = async (semester, group, course) => {
-    const departmentCourses = await Resource.readDepartmentCourses(semester, course)
+    const departmentResources = await Resource.readDepartmentResources(semester, course)
 
-    const groupCourses = await Resource.find({
+    const groupResources = await Resource.find({
         semester: semester,
         group: group,
         course: course
     })
 
-    const allResources = departmentCourses.concat(groupCourses)
+    const allResources = departmentResources.concat(groupResources)
 
     return allResources
 }

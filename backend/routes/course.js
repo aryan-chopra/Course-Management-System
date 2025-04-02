@@ -1,7 +1,10 @@
 import express from "express";
 import { createCourse, deleteCourse, readCourse, updateCourse, updateCourseGroups } from "../controllers/course.js";
+import { authenticate } from "../middlewares/authenticate.js";
 
 const CourseRoutes = express()
+
+CourseRoutes.use(authenticate)
 
 CourseRoutes.get('/', (req, res) => {
     res.send("Viewing course home page")
