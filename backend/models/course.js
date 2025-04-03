@@ -48,7 +48,7 @@ courseSchema.index({ coordinator: 1 })
 //Hook to "deep delete" a course, i.e, delete the courses assigned to groups, and course's resources
 courseSchema.pre("deleteOne", { document: true, query: false }, async function (next) {
     
-    await Resource.deleteResourcesOfCourse(courseInfo.semester, this._id)
+    await Resource.deleteResourcesOfCourse(this.semester, this._id)
     
     const groups = await Group.getGroupsWithCourse(this.semester, this._id)
     

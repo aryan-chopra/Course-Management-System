@@ -25,31 +25,22 @@ Course.createResource = async (user, semester, courseName, resourceDoc) => {
         throw new UnauthorisedException()
     }
 
-    const courseDoc = await Course.findOne(
-        {
-            semester: semester,
-            courseName: courseName
-        },
-        "coordinator"
-    )
-
-    if (!courseDoc) {
-        throw new InvalidIdException("course")
-    }
-
     let authorId
 
     if (user.role === 'admin') {
         authorId = await User.getId(user.email)
     } else if (user.role === 'teacher') {
-        authorId = await Teacher.getId(user.email)
+        const coordinator = await Course.getCoordinatorEmail(semester, courseName)
 
-        if (courseDoc.coordinator.equals(authorId) == false) {
+        if (user.email !== coordinator) {
             throw new UnauthorisedException()
         }
+
+        authorId = await Teacher.getId(user.email)
     }
 
     resourceDoc.author = authorId
+    resourceDoc.semester = semester
 
     await Resource.createResource(resourceDoc)
 }
@@ -122,7 +113,7 @@ Course.getId = async (semester, courseName) => {
         }
     )
 
-    return courseId._id
+    return courseId._id.toHexString()
 }
 
 Course.checkExistance = async (semester, courseName) => {

@@ -1,5 +1,5 @@
 import express from "express";
-import { createGroup, deleteGroup, readGroup, updateGroup } from "../controllers/group.js";
+import { createGroup, createGroupResource, deleteGroup, readGroup, updateGroup } from "../controllers/group.js";
 import { authenticate } from "../middlewares/authenticate.js";
 
 const GroupRoutes = express()
@@ -11,6 +11,8 @@ GroupRoutes.get('/', (req, res) => {
 })
 
 GroupRoutes.post('/create', createGroup)
+
+GroupRoutes.post('/:semester/:number/resource/create', createGroupResource)
 
 GroupRoutes.get('/:semester/:number', readGroup)
 

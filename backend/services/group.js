@@ -1,8 +1,10 @@
+import mongoose, { Mongoose } from "mongoose";
 import { InvalidIdException } from "../exceptions/idException.js";
 import { UnauthorisedException } from "../exceptions/unauthorisedException.js";
 import Group from "../models/group.js";
 import Resource from "./resource.js";
 import Teacher from "./teacher.js";
+import Course from "./course.js";
 
 /**
  * POST
@@ -22,10 +24,70 @@ Group.createGroup = async (user, groupDoc) => {
     await group.save()
 }
 
+Group.createResource = async (user, semester, groupNumber, resourceDoc) => {
+    if (user.role !== 'admin' && user.role !== 'teacher') {
+        throw new UnauthorisedException()
+    }
+
+    if (user.role === 'teacher') {
+        const mentor = await Group.getMentorEmail(semester, groupNumber)
+        if (mentor !== user.email) {
+            const teacherId = await Teacher.getId(user.email)
+            const courseId = await Course.getId(semester, resourceDoc.course)
+            const isValidTeacherOfGroup = await Group.verifyTeacher(courseId, teacherId, semester, groupNumber)
+
+            if (isValidTeacherOfGroup == false) {
+                throw new UnauthorisedException()
+            }
+        }
+    }
+
+    resourceDoc.author = user.email
+    resourceDoc.group = groupNumber
+    resourceDoc.semester = semester
+
+    const resource = await Resource.createResource(resourceDoc)
+
+    return resource
+}
+
 
 /**
  * GET 
  */
+
+Group.verifyTeacher = async (courseId, teacherId, semester, groupNumber) => {
+    const teacherCourses = await Group.aggregate(
+        [
+            {
+                '$match': {
+                    'semester': parseInt(semester),
+                    'groupNumber': parseInt(groupNumber)
+                }
+            },
+            {
+                '$unwind': '$courses'
+            },
+            {
+                '$match': {
+                    'courses.course': mongoose.Types.ObjectId.createFromHexString(courseId),
+                    'courses.teacher': mongoose.Types.ObjectId.createFromHexString(teacherId)
+                }
+            },
+            {
+                '$project': {
+                    course: '$courses.course'
+                }
+            }
+        ]
+    )
+
+    if (teacherCourses.length > 0) {
+        return true
+    } else {
+        return false
+    }
+}
 
 Group.getMentorEmail = async (semester, groupNumber) => {
     const group = await Group.findOne(
@@ -37,12 +99,12 @@ Group.getMentorEmail = async (semester, groupNumber) => {
             mentor: 1
         }
     )
-    .populate({
-        path: 'mentor',
-        populate: {
-            path: 'info'
-        }
-    })
+        .populate({
+            path: 'mentor',
+            populate: {
+                path: 'info'
+            }
+        })
 
     return group.mentor.info.email
 }
@@ -69,29 +131,29 @@ Group.readGroup = async (user, semester, groupNumber) => {
             __v: 0
         }
     )
-    .populate('students')
-    .populate({
-        path: 'mentor',
-        populate: {
-            path: 'info'
-        }
-    })
-    .populate({
-        path: 'courses',
-        populate: {
-            path: 'course',
-            select: 'courseName'
-        }
-    })
-    .populate({
-        path: 'courses',
-        populate: {
-            path: 'teacher',
+        .populate('students')
+        .populate({
+            path: 'mentor',
             populate: {
                 path: 'info'
             }
-        }
-    })
+        })
+        .populate({
+            path: 'courses',
+            populate: {
+                path: 'course',
+                select: 'courseName'
+            }
+        })
+        .populate({
+            path: 'courses',
+            populate: {
+                path: 'teacher',
+                populate: {
+                    path: 'info'
+                }
+            }
+        })
 
     if (groupDoc == null) {
         throw new InvalidIdException("group")

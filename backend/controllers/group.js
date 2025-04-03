@@ -13,6 +13,21 @@ export const createGroup = async (req, res, next) => {
     }
 }
 
+export const createGroupResource = async (req, res, next) => {
+    try {
+        const semester = req.params.semester
+        const groupNumber = req.params.number
+        const user = req.user
+        const resourceDoc = req.body.resource
+
+        const resource = await Group.createResource(user, semester, groupNumber, resourceDoc)
+
+        res.status(StatusCodes.OK).json({ resource: resource })
+    } catch (error) {
+        next(error)
+    }
+}
+
 export const readGroup = async (req, res, next) => {
     try {
         const semester = req.params.semester

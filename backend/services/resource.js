@@ -10,6 +10,8 @@ Resource.createResource = async (resourceDoc) => {
     const resource = new Resource(resourceDoc)
 
     await resource.save()
+
+    return resource
 }
 
 Resource.readDepartmentResources = async (semester, course) => {
