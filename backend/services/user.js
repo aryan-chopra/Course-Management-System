@@ -7,6 +7,7 @@ import { InvalidCredentialsException } from "../exceptions/invalidCredentialsExc
 import { UnauthorisedException } from "../exceptions/unauthorisedException.js";
 import { InvalidIdException } from "../exceptions/idException.js";
 import { BadRequestException } from "../exceptions/badRequest.js";
+import Admin from "../models/admin.js";
 
 User.createUser = async function (userInfo) {
     const hashedPassword = await bcrypt.hash(userInfo.password, 10)
@@ -30,16 +31,21 @@ User.createUser = async function (userInfo) {
                 groupNumber: userInfo.groupNumber
             }
 
-            const student = new Student(studentDoc)
-            await student.save()
+            await Student.createStudent(studentDoc)
         } else if (userInfo.role === 'teacher') {
             const teacherDoc = {
                 userId: user._id,
                 name: userInfo.name
             }
 
-            const teacher = new Teacher(teacherDoc)
-            await teacher.save()
+            await Teacher.createTeacher(teacherDoc)
+        } else if (userInfo.role === 'admin') {
+            const adminDoc = {
+                userId: user._id,
+                name: userInfo.name
+            }
+
+            await Admin.createAdmin(adminDoc)
         }
     } catch (error) {
         await user.deleteOne()

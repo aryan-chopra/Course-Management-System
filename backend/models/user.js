@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import Student from "../services/student.js";
 import Teacher from "../services/teacher.js";
+import Admin from "./admin.js";
 
 const userSchema = new mongoose.Schema({
     email: {
@@ -76,6 +77,8 @@ userSchema.pre('deleteOne', { document: true, query: false }, async function (ne
         await Student.deleteStudent(this._id)
     } else if (this.role === 'teacher') {
         await Teacher.deleteTeacher(this._id)
+    } else if (this.role === 'admin') {
+        await Admin.deleteAdmin(this._id)
     }
 
     next()

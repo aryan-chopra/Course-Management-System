@@ -17,6 +17,6 @@ const adminSchema = new mongoose.Schema({
         collection: 'users'
     })
 
-const User = mongoose.model("admin", adminSchema)
+const Admin = mongoose.model("admin", adminSchema)
 
-export default User
+export default Admin
