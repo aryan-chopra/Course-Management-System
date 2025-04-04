@@ -16,3 +16,5 @@ Admin.deleteAdmin = async (userId) => {
 
     return res.deletedCount
 }
+
+export default Admin

@@ -7,7 +7,7 @@ import { InvalidCredentialsException } from "../exceptions/invalidCredentialsExc
 import { UnauthorisedException } from "../exceptions/unauthorisedException.js";
 import { InvalidIdException } from "../exceptions/idException.js";
 import { BadRequestException } from "../exceptions/badRequest.js";
-import Admin from "../models/admin.js";
+import Admin from "../services/admin.js";
 
 User.createUser = async function (userInfo) {
     const hashedPassword = await bcrypt.hash(userInfo.password, 10)

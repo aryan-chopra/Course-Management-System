@@ -33,9 +33,34 @@ const studentSchema = new mongoose.Schema({
         collection: 'students'
     })
 
+
+/**
+ * Indexes
+ */
+
 studentSchema.index({ rollnumber: 1 }, { unique: true })
 studentSchema.index({ semester: 1, groupNumber: 1 })
 studentSchema.index({ userId: 1 }, { unique: true })
+
+
+/**
+ * Virtuals
+ */
+
+studentSchema.virtual('info', {
+    ref: 'user',
+    localField: 'userId',
+    foreignField: '_id',
+    justOne: true,
+    options: {
+        select: 'email'
+    }
+})
+
+
+/**
+ * PRE/POST Save hooks
+ */
 
 studentSchema.pre('save', async function (next){
     await Group.checkExistance(this.semester, this.groupNumber)
