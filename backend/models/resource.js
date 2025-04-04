@@ -26,9 +26,15 @@ const resourceSchema = new mongoose.Schema({
 
     author: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'user',
+        refPath: 'authorType',
         required: true,
         immutable: true
+    },
+
+    authorType: {
+        type: String,
+        enum: ['student', 'teacher', 'admin'],
+        required: true
     },
 
     title: {

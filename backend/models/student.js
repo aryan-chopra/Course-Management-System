@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import Group from "./group.js";
 
 const studentSchema = new mongoose.Schema({
     userId: {
@@ -35,6 +36,12 @@ const studentSchema = new mongoose.Schema({
 studentSchema.index({ rollnumber: 1 }, { unique: true })
 studentSchema.index({ semester: 1, groupNumber: 1 })
 studentSchema.index({ userId: 1 }, { unique: true })
+
+studentSchema.pre('save', async function (next){
+    await Group.checkExistance(this.semester, this.groupNumber)
+
+    next()
+})
 
 const Student = mongoose.model('student', studentSchema)
 

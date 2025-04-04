@@ -1,6 +1,7 @@
 import { InvalidIdException } from "../exceptions/idException.js";
 import Student from "../models/student.js";
 import Group from "./group.js";
+import User from "../models/user.js";
 
 Student.createStudent = async (studentDoc) => {
     const student = new Student(studentDoc)
@@ -18,8 +19,25 @@ Student.readStudent = async (rollnumber) => {
     return student
 }
 
-Student.readCourses = async (semester, group) => {
-    const resources = await Group.readCourses(semester, group)
+Student.getStudentByEmail = async (email) => {
+    const userId = await User.getId(email)
+
+    const student = await Student.findOne(
+        {
+            userId: userId
+        }
+    )
+
+    return student
+}
+
+Student.readResources = async (user) => {
+    const student = await Student.getStudentByEmail(user.email)
+
+    console.log("Student:")
+    console.log(student)
+
+    const resources = await Group.readResources(student.semester, student.groupNumber)
     return resources
 }
 

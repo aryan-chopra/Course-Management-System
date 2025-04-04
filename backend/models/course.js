@@ -50,7 +50,7 @@ courseSchema.pre("deleteOne", { document: true, query: false }, async function (
     
     await Resource.deleteResourcesOfCourse(this.semester, this._id)
     
-    const groups = await Group.getGroupsWithCourse(this.semester, this._id)
+    const groups = await Group.getGroupsWithCourse(this.semester, this._id.toHexString())
     
     console.log(groups)
     

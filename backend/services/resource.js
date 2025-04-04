@@ -32,6 +32,7 @@ Resource.readResourcesOfGroupForCourse = async (semester, group, course) => {
         group: group,
         course: course
     })
+    .populate()
 
     const allResources = departmentResources.concat(groupResources)
 

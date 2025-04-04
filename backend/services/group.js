@@ -173,6 +173,9 @@ Group.readResources = async (semester, groupNumber) => {
 
     const allResources = []
 
+    if (!coursesInfo) {
+        return []
+    }
     for (const courseInfo of coursesInfo.courses) {
         const courseId = courseInfo.course
         const resources = await Resource.readResourcesOfGroupForCourse(semester, groupNumber, courseId);
@@ -183,10 +186,12 @@ Group.readResources = async (semester, groupNumber) => {
 }
 
 Group.getGroupsWithCourse = async (semester, courseId) => {
-    const groupNumbers = await Group.aggregate([
+    console.log("Course id: " + courseId)
+
+    const groupInfo = await Group.aggregate([
         {
             $match: {
-                semester: semester
+                semester: parseInt(semester)
             }
         },
         {
@@ -194,17 +199,29 @@ Group.getGroupsWithCourse = async (semester, courseId) => {
         },
         {
             $match: {
-                "courses.course": courseId
+                "courses.course": mongoose.Types.ObjectId.createFromHexString(courseId)
             }
         },
         {
             $project: {
-                groupNumber: "$groupNumber"
+                groupNumber: "$groupNumber",
+                mentor: "$mentor"
             }
         }
     ])
 
-    return groupNumbers
+    for (const group of groupInfo) {
+        await Group.populate(group, {
+            path: 'mentor',
+            populate: {
+                path: 'info'
+            }
+        })
+
+        delete group._id
+    }
+
+    return groupInfo
 }
 
 Group.checkExistance = async (semester, groupNumber) => {

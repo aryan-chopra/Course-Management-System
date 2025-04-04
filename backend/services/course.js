@@ -6,6 +6,11 @@ import Group from "./group.js";
 import Resource from "./resource.js";
 import Teacher from "./teacher.js";
 
+
+/**
+ * POST requests
+ */
+
 Course.createCourse = async (user, courseDoc) => {
     if (user.role !== 'admin') {
         throw new UnauthorisedException()
@@ -44,6 +49,11 @@ Course.createResource = async (user, semester, courseName, resourceDoc) => {
 
     await Resource.createResource(resourceDoc)
 }
+
+
+/**
+ * GET requests
+ */
 
 Course.getCoordinatorEmail = async (semester, courseName) => {
     const course = await Course.findOne(
@@ -116,6 +126,18 @@ Course.getId = async (semester, courseName) => {
     return courseId._id.toHexString()
 }
 
+Course.getGroups = async (user, semester, courseName) => {
+    if (user.role !== 'admin') {
+        throw new UnauthorisedException()
+    }
+
+    const courseId = await Course.getId(semester, courseName)
+
+    const groups = await Group.getGroupsWithCourse(semester, courseId)
+
+    return groups
+}
+
 Course.checkExistance = async (semester, courseName) => {
     const exists = await Course.exists(
         {
@@ -128,6 +150,11 @@ Course.checkExistance = async (semester, courseName) => {
         throw new InvalidIdException("course")
     }
 }
+
+
+/**
+ * PUT requests
+ */
 
 Course.updateCourse = async (user, semester, courseName, update) => {
     if (user.role !== 'admin' && user.role !== 'teacher') {
@@ -195,6 +222,11 @@ Course.updateGroupInfo = async (user, semester, courseName, updates) => {
         )
     }
 }
+
+
+/**
+ * DELETE requests
+ */
 
 Course.deleteCourse = async (user, semester, name) => {
     if (user.role !== 'admin') {

@@ -28,6 +28,20 @@ export const readCourse = async (req, res, next) => {
     }
 }
 
+export const getGroupsWithCourse = async (req, res, next) => {
+    try {
+        const semester = req.params.semester
+        const name = req.params.name
+        const user = req.user
+
+        const groups = await Course.getGroups(user, semester, name)
+
+        res.status(StatusCodes.OK).json({groups: groups})
+    } catch (error) {
+        next(error)
+    }
+}
+
 export const updateCourse = async (req, res, next) => {
     try {
         const semester = req.params.semester

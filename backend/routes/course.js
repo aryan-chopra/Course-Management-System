@@ -1,5 +1,5 @@
 import express from "express";
-import { createCourse, deleteCourse, readCourse, updateCourse, updateCourseGroups } from "../controllers/course.js";
+import { createCourse, deleteCourse, getGroupsWithCourse, readCourse, updateCourse, updateCourseGroups } from "../controllers/course.js";
 import { authenticate } from "../middlewares/authenticate.js";
 
 const CourseRoutes = express()
@@ -13,6 +13,8 @@ CourseRoutes.get('/', (req, res) => {
 CourseRoutes.post('/create', createCourse)
 
 CourseRoutes.get('/:semester/:name', readCourse)
+
+CourseRoutes.get('/:semester/:name/groups', getGroupsWithCourse)
 
 CourseRoutes.put('/:semester/:name', updateCourse)
 

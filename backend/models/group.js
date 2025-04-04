@@ -46,9 +46,16 @@ const groupSchema = new mongoose.Schema({
 
             transform: function (doc, ret) {
                 delete ret.id
+                delete ret._id
             }
         },
-        toObject: { virtuals: true }
+        toObject: {
+            virtuals: true,
+
+            transform: function (doc, ret) {
+                delete ret._id
+            }
+        }
     })
 
 groupSchema.index({ semester: 1, groupNumber: 1 }, { unique: true })
