@@ -27,6 +27,13 @@ const studentSchema = new mongoose.Schema({
     groupNumber: {
         type: Number,
         required: [true, "Student must have a group"]
+    },
+
+    _institute: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'institute',
+        required: [true, "Institute is required"],
+        immutable: true
     }
 },
     {
@@ -38,8 +45,8 @@ const studentSchema = new mongoose.Schema({
  * Indexes
  */
 
-studentSchema.index({ rollnumber: 1 }, { unique: true })
-studentSchema.index({ semester: 1, groupNumber: 1 })
+studentSchema.index({ _institute: 1, rollnumber: 1 }, { unique: true })
+studentSchema.index({ _institute: 1, semester: 1, groupNumber: 1 })
 studentSchema.index({ userId: 1 }, { unique: true })
 
 

@@ -5,6 +5,7 @@ import Group from "../models/group.js";
 import Resource from "./resource.js";
 import Teacher from "./teacher.js";
 import Course from "./course.js";
+import Institute from "../models/institute.js";
 
 /**
  * POST
@@ -18,6 +19,7 @@ Group.createGroup = async (user, groupDoc) => {
 
     const teacherId = await Teacher.getId(groupDoc.mentor)
     groupDoc.mentor = teacherId
+    groupDoc._institute = await Institute.getId(user.institute)
 
     const group = new Group(groupDoc)
 
@@ -29,12 +31,14 @@ Group.createResource = async (user, semester, groupNumber, resourceDoc) => {
         throw new UnauthorisedException()
     }
 
+    const institute = await Institute.getId(user.institute)
+
     if (user.role === 'teacher') {
-        const mentor = await Group.getMentorEmail(semester, groupNumber)
+        const mentor = await Group.getMentorEmail(institute, semester, groupNumber)
         if (mentor !== user.email) {
             const teacherId = await Teacher.getId(user.email)
-            const courseId = await Course.getId(semester, resourceDoc.course)
-            const isValidTeacherOfGroup = await Group.verifyTeacher(courseId, teacherId, semester, groupNumber)
+            const courseId = await Course.getId(institute, semester, resourceDoc.course)
+            const isValidTeacherOfGroup = await Group.verifyTeacher(courseId, teacherId, institute, semester, groupNumber)
 
             if (isValidTeacherOfGroup == false) {
                 throw new UnauthorisedException()
@@ -45,6 +49,7 @@ Group.createResource = async (user, semester, groupNumber, resourceDoc) => {
     resourceDoc.author = user.email
     resourceDoc.group = groupNumber
     resourceDoc.semester = semester
+    resourceDoc._institute = institute
 
     const resource = await Resource.createResource(resourceDoc)
 
@@ -56,11 +61,12 @@ Group.createResource = async (user, semester, groupNumber, resourceDoc) => {
  * GET 
  */
 
-Group.verifyTeacher = async (courseId, teacherId, semester, groupNumber) => {
+Group.verifyTeacher = async (courseId, teacherId, institute, semester, groupNumber) => {
     const teacherCourses = await Group.aggregate(
         [
             {
                 '$match': {
+                    '_institute': institute,
                     'semester': parseInt(semester),
                     'groupNumber': parseInt(groupNumber)
                 }
@@ -89,9 +95,10 @@ Group.verifyTeacher = async (courseId, teacherId, semester, groupNumber) => {
     }
 }
 
-Group.getMentorEmail = async (semester, groupNumber) => {
+Group.getMentorEmail = async (institute, semester, groupNumber) => {
     const group = await Group.findOne(
         {
+            _institute: institute,
             semester: semester,
             groupNumber: groupNumber
         },
@@ -121,8 +128,11 @@ Group.readGroup = async (user, semester, groupNumber) => {
         }
     }
 
+    const institute = await Institute.getId(user.institute)
+
     const groupDoc = await Group.findOne(
         {
+            _institute: institute,
             semester: semester,
             groupNumber: groupNumber
         },
@@ -162,9 +172,10 @@ Group.readGroup = async (user, semester, groupNumber) => {
     return groupDoc
 }
 
-Group.readResources = async (semester, groupNumber) => {
+Group.readResources = async (institute, semester, groupNumber) => {
     const coursesInfo = await Group.findOne(
         {
+            _institute: institute,
             semester: semester,
             groupNumber: groupNumber
         },
@@ -178,19 +189,20 @@ Group.readResources = async (semester, groupNumber) => {
     }
     for (const courseInfo of coursesInfo.courses) {
         const courseId = courseInfo.course
-        const resources = await Resource.readResourcesOfGroupForCourse(semester, groupNumber, courseId);
+        const resources = await Resource.readResourcesOfGroupForCourse(institute, semester, groupNumber, courseId);
         allResources.push(...resources)
     }
 
     return allResources
 }
 
-Group.getGroupsWithCourse = async (semester, courseId) => {
+Group.getGroupsWithCourse = async (institute, semester, courseId) => {
     console.log("Course id: " + courseId)
 
     const groupInfo = await Group.aggregate([
         {
             $match: {
+                _institute: institute,
                 semester: parseInt(semester)
             }
         },
@@ -224,9 +236,10 @@ Group.getGroupsWithCourse = async (semester, courseId) => {
     return groupInfo
 }
 
-Group.checkExistance = async (semester, groupNumber) => {
+Group.checkExistance = async (institute, semester, groupNumber) => {
     const exists = await Group.exists(
         {
+            _institute: institute,
             semester: semester,
             groupNumber: groupNumber
         }
@@ -246,10 +259,13 @@ Group.updateGroup = async (user, semester, groupNumber, update) => {
         throw new UnauthorisedException()
     }
 
-    await Group.checkExistance(semester, groupNumber)
+    const institute = await Institute.getId(user.institute)
+
+    await Group.checkExistance(institute, semester, groupNumber)
 
     const groupDoc = await Group.findOneAndUpdate(
         {
+            _institute: institute,
             semester: semester,
             groupNumber: groupNumber
         },
@@ -262,11 +278,12 @@ Group.updateGroup = async (user, semester, groupNumber, update) => {
     return groupDoc
 }
 
-Group.addCourse = async (semester, groupNumber, courseTeacherInfo) => {
-    await Group.checkExistance(semester, groupNumber)
+Group.addCourse = async (institute, semester, groupNumber, courseTeacherInfo) => {
+    await Group.checkExistance(institute, semester, groupNumber)
 
     await Group.updateOne(
         {
+            _institute: institute,
             semester: semester,
             groupNumber: groupNumber
         },
@@ -279,11 +296,12 @@ Group.addCourse = async (semester, groupNumber, courseTeacherInfo) => {
     )
 }
 
-Group.removeCourse = async (semester, groupNumber, courseName) => {
-    await Group.checkExistance(semester, groupNumber)
+Group.removeCourse = async (institute, semester, groupNumber, courseName) => {
+    await Group.checkExistance(institute, semester, groupNumber)
 
     await Group.updateOne(
         {
+            _institute: institute,
             semester: semester,
             groupNumber: groupNumber
         },
@@ -300,11 +318,12 @@ Group.removeCourse = async (semester, groupNumber, courseName) => {
     )
 }
 
-Group.changeTeacherOfCourse = async (semester, groupNumber, courseTeacherInfo) => {
-    await Group.checkExistance(semester, groupNumber)
+Group.changeTeacherOfCourse = async (institute, semester, groupNumber, courseTeacherInfo) => {
+    await Group.checkExistance(institute, semester, groupNumber)
 
     await Group.updateOne(
         {
+            _institute: institute,
             semester: semester,
             groupNumber: groupNumber,
             "courses.courseName": courseTeacherInfo.courseName
@@ -330,7 +349,9 @@ Group.deleteGroup = async (user, semester, groupNumber) => {
         throw new UnauthorisedException()
     }
 
-    const group = await Group.findOne({ semester: semester, groupNumber: groupNumber })
+    const institute = await Institute.getId(user.institute)
+
+    const group = await Group.findOne({ _institute: institute, semester: semester, groupNumber: groupNumber })
 
     if (group == null) {
         throw new InvalidIdException("group")

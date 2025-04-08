@@ -29,7 +29,8 @@ const courseSchema = new mongoose.Schema({
     _institute: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'institute',
-        required: [true, "Institute is required"]
+        required: [true, "Institute is required"],
+        immutable: true
     }
 },
     {

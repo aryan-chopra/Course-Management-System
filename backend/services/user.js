@@ -29,7 +29,8 @@ User.createUser = async function (userInfo) {
                 rollnumber: userInfo.rollnumber,
                 name: userInfo.name,
                 semester: userInfo.semester,
-                groupNumber: userInfo.groupNumber
+                groupNumber: userInfo.groupNumber,
+                _institute: user._institute
             }
 
             await Student.createStudent(studentDoc)

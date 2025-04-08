@@ -41,7 +41,8 @@ const groupSchema = new mongoose.Schema({
     _institute: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'institute',
-        required: [true, "Institute is required"]
+        required: [true, "Institute is required"],
+        immutable: true
     }
 },
     {
@@ -71,8 +72,8 @@ groupSchema.index({ _institute: 1, semester: 1, "courses.course": 1 })
 // Virtual to populate students of a group
 groupSchema.virtual('students', {
     ref: 'student',
-    localField: ["semester", "groupNumber"],
-    foreignField: ["semester", "groupNumber"]
+    localField: ["_institute", "semester", "groupNumber"],
+    foreignField: ["_institute", "semester", "groupNumber"]
 })
 
 
@@ -83,7 +84,7 @@ groupSchema.virtual('students', {
 //Hook to remove group resources
 groupSchema.post('deleteOne', { document: true, query: false }, async function (doc, next) {
     //Deleting resources
-    await Resource.deleteResourcesOfGroup(this.semester, this.groupNumber)
+    await Resource.deleteResourcesOfGroup(this._institute, this.semester, this.groupNumber)
 
     next()
 })
@@ -130,10 +131,11 @@ groupSchema.pre('updateOne', async function (next) {
     if (this.getUpdate().$push !== undefined) {
         //Adding a new course
         const semester = Number(this.getQuery().semester)
+        const institute = this.getQuery()._institute
         const teacherEmail = this.getUpdate().$push.courses.teacherEmail
         const courseName = this.getUpdate().$push.courses.courseName
 
-        const courseId = await Course.getId(semester, courseName)
+        const courseId = await Course.getId(institute, semester, courseName)
         const teacherId = await Teacher.getId(teacherEmail)
 
         delete this.getUpdate().$push.courses.teacherEmail
@@ -150,10 +152,11 @@ groupSchema.pre('updateOne', async function (next) {
 groupSchema.pre('updateOne', async function (next) {
     if (this.getUpdate().$pull !== undefined) {
         //Removing an old course
+        const institute = this.getQuery()._institute
         const semester = Number(this.getQuery().semester)
         const courseName = this.getUpdate().$pull.courses.courseName
 
-        const courseId = await Course.getId(semester, courseName)
+        const courseId = await Course.getId(institute, semester, courseName)
 
         this.getUpdate().$pull.courses.course = courseId
         delete this.getUpdate().$pull.courses.courseName
@@ -165,11 +168,12 @@ groupSchema.pre('updateOne', async function (next) {
 // Hook to replace teacherEmail and courseName with object Ids
 groupSchema.pre('updateOne', async function (next) {
     if (this.getUpdate().$set !== undefined) {
+        const institute = this.getQuery()._institute
         const semester = Number(this.getQuery().semester)
         const courseName = this.getQuery()["courses.courseName"]
         const teacherEmail = this.getUpdate().$set["courses.$.teacherEmail"]
 
-        const courseId = await Course.getId(semester, courseName)
+        const courseId = await Course.getId(institute, semester, courseName)
         const teacherId = await Teacher.getId(teacherEmail)
 
         this.getQuery()["courses.course"] = courseId
