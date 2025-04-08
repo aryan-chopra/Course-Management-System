@@ -14,8 +14,9 @@ Resource.createResource = async (resourceDoc) => {
     return resource
 }
 
-Resource.readDepartmentResources = async (semester, course) => {
+Resource.readDepartmentResources = async (institute, semester, course) => {
     const departmentResources = await Resource.find({
+        _institute: institute,
         semester: semester,
         group: null,
         course: course
@@ -24,10 +25,11 @@ Resource.readDepartmentResources = async (semester, course) => {
     return departmentResources
 }
 
-Resource.readResourcesOfGroupForCourse = async (semester, group, course) => {
+Resource.readResourcesOfGroupForCourse = async (institute, semester, group, course) => {
     const departmentResources = await Resource.readDepartmentResources(semester, course)
 
     const groupResources = await Resource.find({
+        _institute: institute,
         semester: semester,
         group: group,
         course: course
@@ -39,15 +41,17 @@ Resource.readResourcesOfGroupForCourse = async (semester, group, course) => {
     return allResources
 }
 
-Resource.deleteResourcesOfCourse = async (semester, course) => {
+Resource.deleteResourcesOfCourse = async (institute, semester, course) => {
     await Resource.deleteMany({
+        _institute: institute,
         semester: semester,
         course: course
     })
 }
 
-Resource.deleteResourcesOfGroup = async (semester, group) => {
+Resource.deleteResourcesOfGroup = async (institute, semester, group) => {
     await Resource.deleteMany({
+        _institute: institute,
         semester: semester,
         group: group
     })

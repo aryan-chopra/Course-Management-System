@@ -2,6 +2,7 @@ import { InvalidIdException } from "../exceptions/idException.js";
 import Student from "../models/student.js";
 import Group from "./group.js";
 import User from "../models/user.js";
+import Institute from "../models/institute.js";
 
 Student.createStudent = async (studentDoc) => {
     const student = new Student(studentDoc)
@@ -37,7 +38,7 @@ Student.readResources = async (user) => {
     console.log("Student:")
     console.log(student)
 
-    const resources = await Group.readResources(student.semester, student.groupNumber)
+    const resources = await Group.readResources(student._institute, student.semester, student.groupNumber)
     return resources
 }
 

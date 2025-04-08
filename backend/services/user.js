@@ -8,15 +8,40 @@ import { UnauthorisedException } from "../exceptions/unauthorisedException.js";
 import { InvalidIdException } from "../exceptions/idException.js";
 import { BadRequestException } from "../exceptions/badRequest.js";
 import Admin from "../services/admin.js";
+import Institute from "../models/institute.js";
 
-User.createUser = async function (userInfo) {
+User.createFirstUserAndAdmin = async function (userInfo, adminInfo) {
     const hashedPassword = await bcrypt.hash(userInfo.password, 10)
+    userInfo.password = hashedPassword
+
+    const user = new User(userInfo)
+    await user.save()
+
+    try {
+        await Admin.createAdmin(adminInfo)
+    }
+    catch (error) {
+        await user.deleteOne()
+        throw error
+    }
+
+    const token = await User.login(userInfo)
+    return token
+}
+
+User.createUser = async function (incomingUser, userInfo) {
+    if (incomingUser.role !== 'admin') {
+        throw new UnauthorisedException()
+    }
+
+    const hashedPassword = await bcrypt.hash(userInfo.password, 10)
+    const institute = await Institute.getId(incomingUser.institute)
 
     const userDoc = {
         email: userInfo.email,
         password: hashedPassword,
         role: userInfo.role,
-        _institute: userInfo._institute
+        _institute: institute
     }
 
     const user = new User(userDoc)
@@ -69,9 +94,11 @@ User.login = async function (userInfo) {
         throw new InvalidCredentialsException()
     }
 
+    const institute = await Institute.getName(user._institute)
+
     const secret = process.env.JWT_SECRET
     const token = jwt.sign(
-        { email: user.email, role: user.role, institute: user._institute },
+        { email: user.email, role: user.role, institute: institute },
         secret,
         {
             expiresIn: "1d"
@@ -96,7 +123,7 @@ User.getId = async function (email) {
     return userDoc._id.toHexString()
 }
 
-User.getUserDoc = async function (_institute, email) {
+User.getUserDoc = async function (email) {
     const doc = await User.findOne({ email: email })
 
     return doc
