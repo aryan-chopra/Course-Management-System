@@ -5,6 +5,7 @@ import User from "./user.js";
 import Group from "./group.js";
 import Resource from "./resource.js";
 import Teacher from "./teacher.js";
+import Institute from "../models/institute.js";
 
 
 /**
@@ -16,6 +17,7 @@ Course.createCourse = async (user, courseDoc) => {
         throw new UnauthorisedException()
     }
 
+    courseDoc._institute = await Institute.getId(user.institute)
     courseDoc.coordinator = await Teacher.getId(courseDoc.coordinator)
 
     console.log(courseDoc.coordinator)
@@ -30,12 +32,14 @@ Course.createResource = async (user, semester, courseName, resourceDoc) => {
         throw new UnauthorisedException()
     }
 
+    const institute = await Institute.getId(user.institute)
+
     let authorId
 
     if (user.role === 'admin') {
         authorId = await User.getId(user.email)
     } else if (user.role === 'teacher') {
-        const coordinator = await Course.getCoordinatorEmail(semester, courseName)
+        const coordinator = await Course.getCoordinatorEmail(institute, semester, courseName)
 
         if (user.email !== coordinator) {
             throw new UnauthorisedException()
@@ -46,6 +50,7 @@ Course.createResource = async (user, semester, courseName, resourceDoc) => {
 
     resourceDoc.author = authorId
     resourceDoc.semester = semester
+    resourceDoc._institute = institute
 
     await Resource.createResource(resourceDoc)
 }
@@ -55,9 +60,10 @@ Course.createResource = async (user, semester, courseName, resourceDoc) => {
  * GET requests
  */
 
-Course.getCoordinatorEmail = async (semester, courseName) => {
+Course.getCoordinatorEmail = async (institute, semester, courseName) => {
     const course = await Course.findOne(
         {
+            _institute: institute,
             semester: semester,
             courseName: courseName
         },
@@ -84,8 +90,11 @@ Course.readCourse = async (user, semester, courseName) => {
         throw new UnauthorisedException()
     }
 
+    const institute = await Institute.getId(user.institute)
+
     const course = await Course.findOne(
         {
+            _institute: institute,
             semester: semester,
             courseName: courseName
         },
@@ -112,9 +121,10 @@ Course.readCourse = async (user, semester, courseName) => {
     return course
 }
 
-Course.getId = async (semester, courseName) => {
+Course.getId = async (institute, semester, courseName) => {
     const courseId = await Course.findOne(
         {
+            _institute: institute,
             semester: semester,
             courseName: courseName
         },
@@ -131,16 +141,19 @@ Course.getGroups = async (user, semester, courseName) => {
         throw new UnauthorisedException()
     }
 
-    const courseId = await Course.getId(semester, courseName)
+    const institute = await Institute.getId(user.institute)
 
-    const groups = await Group.getGroupsWithCourse(semester, courseId)
+    const courseId = await Course.getId(institute, semester, courseName)
+
+    const groups = await Group.getGroupsWithCourse(institute, semester, courseId)
 
     return groups
 }
 
-Course.checkExistance = async (semester, courseName) => {
+Course.checkExistance = async (institute, semester, courseName) => {
     const exists = await Course.exists(
         {
+            _institute: institute,
             semester: semester,
             courseName: courseName
         }
@@ -162,8 +175,10 @@ Course.updateCourse = async (user, semester, courseName, update) => {
         throw new UnauthorisedException()
     }
 
+    const institute = await Institute.getId(user.institute)
+
     if (user.role === 'teacher') {
-        const coordinator = await Course.getCoordinatorEmail(semester, courseName)
+        const coordinator = await Course.getCoordinatorEmail(institute, semester, courseName)
 
         if (coordinator !== user.email) {
             throw new UnauthorisedException()
@@ -172,6 +187,7 @@ Course.updateCourse = async (user, semester, courseName, update) => {
 
     const res = await Course.updateOne(
         {
+            _institute: institute,
             semester: semester,
             courseName: courseName
         },
@@ -190,7 +206,9 @@ Course.updateGroupInfo = async (user, semester, courseName, updates) => {
         throw new UnauthorisedException()
     }
 
-    await Course.checkExistance(semester, courseName)
+    const institute = await Institute.getId(user.institute)
+
+    await Course.checkExistance(institute, semester, courseName)
 
     const addGroupsToCourse = updates.addGroupsToCourse
     const removeGroupsFromCourse = updates.removeGroupsFromCourse
@@ -198,7 +216,7 @@ Course.updateGroupInfo = async (user, semester, courseName, updates) => {
 
     //Add course to group
     for (const groupTeacherInfo of addGroupsToCourse) {
-        await Group.addCourse(semester, groupTeacherInfo.groupNumber,
+        await Group.addCourse(institute, semester, groupTeacherInfo.groupNumber,
             {
                 courseName: courseName,
                 teacherEmail: groupTeacherInfo.teacherEmail
@@ -208,13 +226,13 @@ Course.updateGroupInfo = async (user, semester, courseName, updates) => {
 
     //Remove course from group
     for (const groupNumber of removeGroupsFromCourse) {
-        await Group.removeCourse(semester, groupNumber, courseName
+        await Group.removeCourse(institute, semester, groupNumber, courseName
         )
     }
 
     //Change teacher of course in group
     for (const groupTeacherInfo of changeTeacherOfGroupsInCourse) {
-        await Group.changeTeacherOfCourse(semester, groupTeacherInfo.groupNumber,
+        await Group.changeTeacherOfCourse(institute, semester, groupTeacherInfo.groupNumber,
             {
                 courseName: courseName,
                 teacherEmail: groupTeacherInfo.teacherEmail
@@ -233,7 +251,13 @@ Course.deleteCourse = async (user, semester, name) => {
         throw new UnauthorisedException()
     }
 
-    const course = await Course.findOne({ semester: semester, courseName: name })
+    const institute = await Institute.getId(user.institute)
+
+    const course = await Course.findOne({
+        _institute: institute,
+        semester: semester,
+        courseName: name
+    })
 
     if (!course) {
         throw new InvalidIdException("course")

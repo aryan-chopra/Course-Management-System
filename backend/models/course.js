@@ -24,6 +24,12 @@ const courseSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'teacher',
         required: true
+    },
+
+    _institute: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'institute',
+        required: [true, "Institute is required"]
     }
 },
     {
@@ -37,8 +43,8 @@ const courseSchema = new mongoose.Schema({
         }
     })
 
-courseSchema.index({ semester: 1, courseName: 1 }, { unique: true })
-courseSchema.index({ coordinator: 1 })
+courseSchema.index({ _institute: 1, semester: 1, courseName: 1 }, { unique: true })
+courseSchema.index({ _institute: 1, coordinator: 1 })
 
 
 /** 
@@ -48,16 +54,16 @@ courseSchema.index({ coordinator: 1 })
 //Hook to "deep delete" a course, i.e, delete the courses assigned to groups, and course's resources
 courseSchema.pre("deleteOne", { document: true, query: false }, async function (next) {
     
-    await Resource.deleteResourcesOfCourse(this.semester, this._id)
+    await Resource.deleteResourcesOfCourse(this._institute, this.semester, this._id)
     
-    const groups = await Group.getGroupsWithCourse(this.semester, this._id.toHexString())
+    const groups = await Group.getGroupsWithCourse(this._institute, this.semester, this._id.toHexString())
     
     console.log(groups)
     
     for (const groupInfo of groups) {
         const groupNumber = groupInfo.groupNumber
         
-        await Group.removeCourse(this.semester, groupNumber, this.courseName)
+        await Group.removeCourse(this._institute, this.semester, groupNumber, this.courseName)
     }
     
     next()

@@ -12,9 +12,7 @@ const userSchema = new mongoose.Schema({
                 return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email)
             },
             message: "Please provide a valid e-mail address"
-        },
-        index: true,
-        unique: [true, "E-mail already in use"]
+        }
     },
 
     password: {
@@ -34,19 +32,30 @@ const userSchema = new mongoose.Schema({
         immutable: true,
         enum: ['student', 'teacher', 'admin']
     },
+
+    _institute: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'institute',
+        required: [true, "Institute is required"]
+    }
 },
     {
         collection: 'users',
         toJSON: {
             virtuals: true,
 
-            transform: function(doc, ret) {
+            transform: function (doc, ret) {
                 delete ret._id
             }
         },
         toObject: { virtuals: true },
         id: false
     })
+
+
+userSchema.index({ email: 1 }, { unique: true })
+userSchema.index({ _institute: 1 })
+
 
 userSchema.virtual('userInfo', {
     ref: function (doc) {

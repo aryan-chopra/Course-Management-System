@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { mongo } from "mongoose";
 import Resource from "../services/resource.js";
 import Teacher from "../services/teacher.js";
 import Course from "./course.js";
@@ -36,6 +36,12 @@ const groupSchema = new mongoose.Schema({
                 }
             }
         ]
+    },
+
+    _institute: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'institute',
+        required: [true, "Institute is required"]
     }
 },
     {
@@ -58,9 +64,9 @@ const groupSchema = new mongoose.Schema({
         }
     })
 
-groupSchema.index({ semester: 1, groupNumber: 1 }, { unique: true })
-groupSchema.index({ "courses.teacher": 1 })
-groupSchema.index({ semester: 1, "courses.course": 1 })
+groupSchema.index({ _institute: 1, semester: 1, groupNumber: 1 }, { unique: true })
+groupSchema.index({ _institute: 1, "courses.teacher": 1 })
+groupSchema.index({ _institute: 1, semester: 1, "courses.course": 1 })
 
 // Virtual to populate students of a group
 groupSchema.virtual('students', {

@@ -15,7 +15,8 @@ User.createUser = async function (userInfo) {
     const userDoc = {
         email: userInfo.email,
         password: hashedPassword,
-        role: userInfo.role
+        role: userInfo.role,
+        _institute: userInfo._institute
     }
 
     const user = new User(userDoc)
@@ -69,7 +70,7 @@ User.login = async function (userInfo) {
 
     const secret = process.env.JWT_SECRET
     const token = jwt.sign(
-        { email: user.email, role: user.role },
+        { email: user.email, role: user.role, institute: user._institute },
         secret,
         {
             expiresIn: "1d"
@@ -94,7 +95,7 @@ User.getId = async function (email) {
     return userDoc._id.toHexString()
 }
 
-User.getUserDoc = async function (email) {
+User.getUserDoc = async function (_institute, email) {
     const doc = await User.findOne({ email: email })
 
     return doc

@@ -51,13 +51,19 @@ const resourceSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+
+    _institute: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'institute',
+        required: [true, "Institute is required"]
+    }
 },
     {
         collection: "resources",
         minimize: false
     })
 
-resourceSchema.index({ semester: 1, group: 1, course: 1 })
+resourceSchema.index({ _institute: 1, semester: 1, group: 1, course: 1 })
 
 const Resource = mongoose.model("resource", resourceSchema)
 
