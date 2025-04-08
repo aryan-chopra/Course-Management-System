@@ -8,6 +8,7 @@ import ResourceRoutes from "./routes/resource.js"
 import StudentRoutes from "./routes/student.js"
 import TeacherRoutes from "./routes/teacher.js"
 import UserRoutes from "./routes/user.js"
+import InstituteRoutes from "./routes/institute.js"
 
 const app = express()
 
@@ -30,6 +31,7 @@ app.use('/resource', ResourceRoutes)
 app.use('/student', StudentRoutes)
 app.use('/teacher', TeacherRoutes)
 app.use('/user', UserRoutes)
+app.use('/institute', InstituteRoutes)
 
 //Error Handling
 app.use(errorHandler)

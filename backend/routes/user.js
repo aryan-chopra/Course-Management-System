@@ -6,7 +6,7 @@ const UserRoutes = express()
 
 UserRoutes.get("/login", loginUser)
 
-UserRoutes.post("/create", createUser)
+UserRoutes.post("/create", authenticate, createUser)
 
 UserRoutes.delete("/delete", authenticate, deleteUser)
 

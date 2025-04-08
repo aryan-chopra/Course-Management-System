@@ -4,8 +4,9 @@ import User from "../services/user.js"
 export const createUser = async (req, res, next) => {
     try {
         const userDoc = req.body
+        const user = req.user
 
-        const token = await User.createUser(userDoc)
+        const token = await User.createUser(user, userDoc)
     
         res.status(StatusCodes.OK).json({token: token, expiresIn: "1d"})
     } catch (error) {
