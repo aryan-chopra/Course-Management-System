@@ -78,7 +78,7 @@ courseSchema.pre("deleteOne", { document: true, query: false }, async function (
 // Hook to replace coordinatorEmail with teacher Id
 courseSchema.pre("save", async function (next) {
     if (!this.isNew && this.isModified("coordinator")) {
-        this.coordinator = await Teacher.getId(this.coordinator)
+        this.coordinator = await Teacher.getId(this._institute, this.coordinator)
     }
 
     next()
@@ -95,7 +95,7 @@ courseSchema.pre(['findOneAndUpdate', 'updateOne', 'updateMany'], async function
     console.log(this.getUpdate())
 
     if (this.getUpdate().coordinator) {
-        this.getUpdate().coordinator = await Teacher.getId(this.getUpdate().coordinator)
+        this.getUpdate().coordinator = await Teacher.getId(this.getQuery()._institute, this.getUpdate().coordinator)
         console.log(this.getUpdate())
     }
 

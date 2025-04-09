@@ -10,6 +10,12 @@ const teacherSchema = new mongoose.Schema({
     name: {
         type: String,
         required: [true, "Please provide a name"],
+    },
+
+    _institute: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'institute',
+        required: [true, "Institute is required"]
     }
 },
     {
@@ -18,7 +24,7 @@ const teacherSchema = new mongoose.Schema({
         toJSON: {
             virtuals: true,
 
-            transform: function(doc, ret) {
+            transform: function (doc, ret) {
                 delete ret._id
                 delete ret.__v
                 delete ret.userId

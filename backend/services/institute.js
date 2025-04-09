@@ -10,8 +10,16 @@ Institute.createInstitute = async (name, adminInfo) => {
     const institute = new Institute(instituteDoc)
     await institute.save()
 
+    const userDoc = {
+        email: adminInfo.email,
+        password: adminInfo.password,
+        role: "admin",
+        _institute: institute._id
+    }
+
     try {
-        await User.createFirstUserAndAdmin(adminInfo)
+        const token = await User.createFirstUserAndAdmin(userDoc, adminInfo)
+        return token
     } catch (error) {
         await institute.deleteOne()
         throw error
@@ -36,7 +44,7 @@ Institute.getId = async (name) => {
 }
 
 Institute.getName = async (id) => {
-    const institute = await Institute.findone(
+    const institute = await Institute.findOne(
         {
             _id: id
         },

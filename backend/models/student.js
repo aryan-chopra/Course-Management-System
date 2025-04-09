@@ -70,7 +70,7 @@ studentSchema.virtual('info', {
  */
 
 studentSchema.pre('save', async function (next){
-    await Group.checkExistance(this.semester, this.groupNumber)
+    await Group.checkExistance(this._institute, this.semester, this.groupNumber)
 
     next()
 })

@@ -97,7 +97,7 @@ groupSchema.post('deleteOne', { document: true, query: false }, async function (
 // Hook to replace teacher e-mail with teacher id before saving old doc
 groupSchema.pre('save', async function (next) {
     if (!this.isNew && this.isModified("mentor")) {
-        this.mentor = await Teacher.getId(this.mentor)
+        this.mentor = await Teacher.getId(this._institute, this.mentor)
     }
 
     next()
@@ -120,7 +120,7 @@ groupSchema.post('save', (error, doc, next) => {
 // Hook to replace mentor e-mail with Id in case of update operations
 groupSchema.pre(['findOneAndUpdate', 'updateOne', 'updateMany'], async function (next) {
     if (this.getUpdate().mentor !== undefined) {
-        this.getUpdate().mentor = await Teacher.getId(this.getUpdate().mentor)
+        this.getUpdate().mentor = await Teacher.getId(this.getQuery._institute, this.getUpdate().mentor)
     }
 
     next()
@@ -136,7 +136,7 @@ groupSchema.pre('updateOne', async function (next) {
         const courseName = this.getUpdate().$push.courses.courseName
 
         const courseId = await Course.getId(institute, semester, courseName)
-        const teacherId = await Teacher.getId(teacherEmail)
+        const teacherId = await Teacher.getId(institute, teacherEmail)
 
         delete this.getUpdate().$push.courses.teacherEmail
         this.getUpdate().$push.courses.teacher = teacherId
@@ -174,7 +174,7 @@ groupSchema.pre('updateOne', async function (next) {
         const teacherEmail = this.getUpdate().$set["courses.$.teacherEmail"]
 
         const courseId = await Course.getId(institute, semester, courseName)
-        const teacherId = await Teacher.getId(teacherEmail)
+        const teacherId = await Teacher.getId(institute, teacherEmail)
 
         this.getQuery()["courses.course"] = courseId
         delete this.getQuery()["courses.courseName"]

@@ -18,7 +18,7 @@ Course.createCourse = async (user, courseDoc) => {
     }
 
     courseDoc._institute = await Institute.getId(user.institute)
-    courseDoc.coordinator = await Teacher.getId(courseDoc.coordinator)
+    courseDoc.coordinator = await Teacher.getId(courseDoc._institute, courseDoc.coordinator)
 
     console.log(courseDoc.coordinator)
 
@@ -45,7 +45,7 @@ Course.createResource = async (user, semester, courseName, resourceDoc) => {
             throw new UnauthorisedException()
         }
 
-        authorId = await Teacher.getId(user.email)
+        authorId = await Teacher.getId(institute, user.email)
     }
 
     resourceDoc.author = authorId

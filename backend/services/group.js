@@ -17,9 +17,9 @@ Group.createGroup = async (user, groupDoc) => {
         throw new UnauthorisedException()
     }
 
-    const teacherId = await Teacher.getId(groupDoc.mentor)
-    groupDoc.mentor = teacherId
     groupDoc._institute = await Institute.getId(user.institute)
+    const teacherId = await Teacher.getId(groupDoc._institute, groupDoc.mentor)
+    groupDoc.mentor = teacherId
 
     const group = new Group(groupDoc)
 
@@ -36,7 +36,7 @@ Group.createResource = async (user, semester, groupNumber, resourceDoc) => {
     if (user.role === 'teacher') {
         const mentor = await Group.getMentorEmail(institute, semester, groupNumber)
         if (mentor !== user.email) {
-            const teacherId = await Teacher.getId(user.email)
+            const teacherId = await Teacher.getId(institute, user.email)
             const courseId = await Course.getId(institute, semester, resourceDoc.course)
             const isValidTeacherOfGroup = await Group.verifyTeacher(courseId, teacherId, institute, semester, groupNumber)
 
@@ -121,14 +121,14 @@ Group.readGroup = async (user, semester, groupNumber) => {
         throw new UnauthorisedException()
     }
 
+    const institute = await Institute.getId(user.institute)
+
     if (user.role === 'teacher') {
-        const mentor = await Group.getMentorEmail(semester, groupNumber)
+        const mentor = await Group.getMentorEmail(institute, semester, groupNumber)
         if (user.email !== mentor) {
             throw new UnauthorisedException()
         }
     }
-
-    const institute = await Institute.getId(user.institute)
 
     const groupDoc = await Group.findOne(
         {

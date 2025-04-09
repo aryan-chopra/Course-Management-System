@@ -40,7 +40,7 @@ Teacher.readTeacher = async (user, email) => {
     return teacherJSON
 }
 
-Teacher.getId = async (teacherEmail) => {
+Teacher.getId = async (institute, teacherEmail) => {
     const user = await User.getUserDoc(teacherEmail)
 
     if (!user) {
@@ -52,9 +52,14 @@ Teacher.getId = async (teacherEmail) => {
 
     const teacher = await Teacher.findOne(
         {
+            _institute: institute,
             userId: user._id
         }
     )
+
+    if (!teacher) {
+        throw new BadRequestException("teacher")
+    }
 
     return teacher._id.toHexString()
 }

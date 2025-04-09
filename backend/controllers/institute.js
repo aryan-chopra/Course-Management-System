@@ -3,8 +3,8 @@ import Institute from "../services/institute.js"
 
 export const createInstitute = async (req, res, next) => {
     try {
-        const name = req.info.name
-        const adminInfo = req.info.adminInfo
+        const name = req.body.info.name
+        const adminInfo = req.body.info.adminInfo
 
         const token = await Institute.createInstitute(name, adminInfo)
 

@@ -11,21 +11,28 @@ import Admin from "../services/admin.js";
 import Institute from "../models/institute.js";
 
 User.createFirstUserAndAdmin = async function (userInfo, adminInfo) {
+    console.log("User:")
+    console.log(userInfo)
+
     const hashedPassword = await bcrypt.hash(userInfo.password, 10)
+    const ogPasswrd = userInfo.password
     userInfo.password = hashedPassword
 
     const user = new User(userInfo)
     await user.save()
 
+    adminInfo.userId = user._id
+    let token
+
     try {
         await Admin.createAdmin(adminInfo)
+        token = await User.login({ email: userInfo.email, password: ogPasswrd })
     }
     catch (error) {
         await user.deleteOne()
         throw error
     }
 
-    const token = await User.login(userInfo)
     return token
 }
 
@@ -55,14 +62,15 @@ User.createUser = async function (incomingUser, userInfo) {
                 name: userInfo.name,
                 semester: userInfo.semester,
                 groupNumber: userInfo.groupNumber,
-                _institute: user._institute
+                _institute: institute
             }
 
             await Student.createStudent(studentDoc)
         } else if (userInfo.role === 'teacher') {
             const teacherDoc = {
                 userId: user._id,
-                name: userInfo.name
+                name: userInfo.name,
+                _institute: institute
             }
 
             await Teacher.createTeacher(teacherDoc)

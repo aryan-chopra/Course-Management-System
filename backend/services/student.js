@@ -2,7 +2,6 @@ import { InvalidIdException } from "../exceptions/idException.js";
 import Student from "../models/student.js";
 import Group from "./group.js";
 import User from "../models/user.js";
-import Institute from "../models/institute.js";
 
 Student.createStudent = async (studentDoc) => {
     const student = new Student(studentDoc)
@@ -10,8 +9,8 @@ Student.createStudent = async (studentDoc) => {
     await student.save()
 }
 
-Student.readStudent = async (rollnumber) => {
-    const student = await Student.findOne({ rollnumber: rollnumber })
+Student.readStudent = async (institute, rollnumber) => {
+    const student = await Student.findOne({ _institute: institute, rollnumber: rollnumber })
 
     if (student == null) {
         throw new InvalidIdException("student")
