@@ -8,13 +8,14 @@ import OutlineButton from "../components/OutlineButton.jsx"
 const FormContext = createContext({})
 
 const Inputs = () => {
-    const {formState, updateFormState} = useContext(FormContext)
+    const { formState, updateFormState } = useContext(FormContext)
 
     let inputArray = []
 
     const formUpdateHelper = (e) => {
-        const {name, value} = e.target
+        const { name, value } = e.target
 
+        updateFormState(name + "Error", "")
         updateFormState(name, value)
     }
 
@@ -79,7 +80,7 @@ const Inputs = () => {
 }
 
 const Buttons = () => {
-    const {formState, updateFormState} = useContext(FormContext)
+    const { formState, updateFormState } = useContext(FormContext)
 
     if (formState.inputType === "name") {
         return (
@@ -121,7 +122,7 @@ const SignupForm = () => {
 }
 
 function SignUp() {
-    const initalState ={
+    const initalState = {
         inputType: "name",
         instituteName: "",
         instituteNameError: "",
@@ -138,10 +139,12 @@ function SignUp() {
     const [formState, setFormState] = useState(initalState)
 
     const updateFormState = (name, value) => {
-        setFormState({
+        console.log("Updating: " + name + " to: " + value)
+
+        setFormState(formState => ({
             ...formState,
             [name]: value
-        })
+        }))
     }
 
     return (
@@ -157,9 +160,11 @@ function SignUp() {
 }
 
 function goToAdmin(formState, updateFormState) {
-    updateFormState("inputType", "admin")
-
-    console.log(formState.instituteName, formState.adminName)
+    if (formState.instituteName.length == 0) {
+        updateFormState("instituteNameError", "Required")
+    } else if (formState.adminName.length == 0) {
+        updateFormState("adminNameError", "Required")
+    }
 }
 
 function goBack(formState, updateFormState) {
