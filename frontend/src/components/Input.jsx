@@ -1,4 +1,4 @@
-function Input({ placeholder = "Type here...", type = "text", label = "", error = "", onChange, value }) {
+function Input({ placeholder = "Type here...", type = "text", label = "", error = "", onChange, value, name }) {
     const Label = () => {
         if (label.length == 0) {
             return null
@@ -30,7 +30,8 @@ function Input({ placeholder = "Type here...", type = "text", label = "", error 
         <div className="w-full max-w-sm min-w-[200px]">
             <Label />
             <input
-                onChange={(e) => onChange(e.target.value)}
+                name={name}
+                onChange={(e) => onChange(e)}
                 value={value}
                 type={type}
                 className="w-full font-poppins bg-white placeholder:text-slate-400 text-slate-700 text-md rounded-full px-5 py-4 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-300"

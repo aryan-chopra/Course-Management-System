@@ -5,26 +5,36 @@ import PrimaryButton from "../components/PrimaryButton.jsx"
 import { createContext, useContext, useState } from "react"
 import OutlineButton from "../components/OutlineButton.jsx"
 
-const DataContext = createContext("")
+const FormContext = createContext({})
 
 const Inputs = () => {
-    const {inputType, instituteName, setInstituteName, adminName, setAdminName} = useContext(DataContext)
+    const {formState, updateFormState} = useContext(FormContext)
 
     let inputArray = []
 
-    if (inputType === "name") {
+    const formUpdateHelper = (e) => {
+        const {name, value} = e.target
+
+        updateFormState(name, value)
+    }
+
+    if (formState.inputType === "name") {
         inputArray = [
             <Input
                 key={"Institution Name"}
-                onChange={setInstituteName}
-                value={instituteName}
+                error={formState.instituteNameError}
+                name={"instituteName"}
+                onChange={formUpdateHelper}
+                value={formState.instituteName}
                 label="Institution Name"
                 placeholder="Enter institution name"
             />,
             <Input
                 key={"Admin Name"}
-                value={adminName}
-                onChange={setAdminName}
+                error={formState.adminNameError}
+                name={"adminName"}
+                value={formState.adminName}
+                onChange={formUpdateHelper}
                 label="Admin Name"
                 placeholder="Enter admin's name"
             />
@@ -33,16 +43,30 @@ const Inputs = () => {
         inputArray = [
             <Input
                 key={"Admin Email"}
-                value={adminEmail}
-                placeholder="Enter admin's Email"
+                error={formState.adminEmailError}
+                name={"adminEmail"}
+                value={formState.adminEmail}
+                onChange={formUpdateHelper}
                 label="Admin Email"
+                placeholder="Enter admin's Email"
             />,
             <Input
+                key={"Admin Password"}
+                error={formState.adminPasswordError}
+                name={"adminPassword"}
+                value={formState.adminPassword}
+                onChange={formUpdateHelper}
                 label="Admin Password"
+                placeholder="Enter admin's password"
             />,
             <Input
+                key={"Admin Confirm Password"}
+                error={formState.adminConfirmPasswordError}
+                name={"adminConfirmPassword"}
+                value={formState.adminConfirmPassword}
+                onChange={formUpdateHelper}
                 label="Confirm Password"
-                placeholder=""
+                placeholder="Confirm admin's password"
             />
         ]
     }
@@ -55,12 +79,12 @@ const Inputs = () => {
 }
 
 const Buttons = () => {
-    const {inputType, instituteName, adminName, setInputType} = useContext(DataContext)
+    const {formState, updateFormState} = useContext(FormContext)
 
-    if (inputType === "name") {
+    if (formState.inputType === "name") {
         return (
             <PrimaryButton
-                onClick={() => goToAdmin(instituteName, adminName, setInputType)}
+                onClick={() => goToAdmin(formState, updateFormState)}
                 className={"rounded-full"}
                 content={"Next"}
             />
@@ -69,7 +93,7 @@ const Buttons = () => {
         return (
             <div className="flex justify-around">
                 <OutlineButton
-                    onClick={() => goBack(setInputType)}
+                    onClick={() => goBack(formState, updateFormState)}
                     className={"basis-1/3 rounded-md"}
                     content={"Back"}
                 />
@@ -82,7 +106,6 @@ const Buttons = () => {
 }
 
 const SignupForm = () => {
-
     return (
         <div className="flex flex-col gap-15">
             <div className="flex flex-col gap-5">
@@ -98,44 +121,49 @@ const SignupForm = () => {
 }
 
 function SignUp() {
-    const [inputType, setInputType] = useState("name")
+    const initalState ={
+        inputType: "name",
+        instituteName: "",
+        instituteNameError: "",
+        adminName: "",
+        adminNameError: "",
+        adminEmail: "",
+        adminEmailError: "",
+        adminPassword: "",
+        adminPasswordError: "",
+        adminConfirmPassword: "",
+        adminConfirmPasswordError: ""
+    }
 
-    const [instituteName, setInstituteName] = useState("")
-    const [instituteNameError, setInstituteNameError] = useState("")
+    const [formState, setFormState] = useState(initalState)
 
-    const [adminName, setAdminName] = useState("")
-    const [adminNameError, setAdminNameError] = useState("")
-
-    const [adminEmail, setAdminEmail] = useState("")
-    const [adminEmailError, setAdminEmailError] = useState("")
+    const updateFormState = (name, value) => {
+        setFormState({
+            ...formState,
+            [name]: value
+        })
+    }
 
     return (
-        <DataContext.Provider value={{
-            inputType,
-            setInputType,
-            instituteName,
-            setInstituteName,
-            instituteNameError,
-            setInstituteNameError,
-            adminName,
-            setAdminName,
-            adminNameError,
-            setAdminNameError
+        <FormContext.Provider value={{
+            formState,
+            updateFormState
         }}>
             <ImageSplitView src={signupImage} className="bg-linear-to-t from-background-100 to-white">
                 <SignupForm />
             </ImageSplitView>
-        </DataContext.Provider>
+        </FormContext.Provider>
     )
 }
 
-function goToAdmin(instituteName, adminName, setInputType) {
-    setInputType("admin")
-    console.log(instituteName, adminName)
+function goToAdmin(formState, updateFormState) {
+    updateFormState("inputType", "admin")
+
+    console.log(formState.instituteName, formState.adminName)
 }
 
-function goBack(setInputType) {
-    setInputType("name")
+function goBack(formState, updateFormState) {
+    updateFormState("inputType", "name")
 }
 
 export default SignUp
