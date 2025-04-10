@@ -15,6 +15,13 @@ const Inputs = () => {
     const formUpdateHelper = (e) => {
         const { name, value } = e.target
 
+        if (name === "adminPassword") {
+            updateFormState("adminConfirmPasswordError", "")
+        }
+        if (name === "adminConfirmPassword") {
+            updateFormState("adminPasswordError", "")
+        }
+
         updateFormState(name + "Error", "")
         updateFormState(name, value)
     }
@@ -99,6 +106,7 @@ const Buttons = () => {
                     content={"Back"}
                 />
                 <PrimaryButton
+                    onClick={() => signup(formState, updateFormState)}
                     className={"basis-1/3 rounded-md"}
                     content={"Sign Up"} />
             </div>
@@ -164,11 +172,38 @@ function goToAdmin(formState, updateFormState) {
         updateFormState("instituteNameError", "Required")
     } else if (formState.adminName.length == 0) {
         updateFormState("adminNameError", "Required")
+    } else {
+        updateFormState("inputType", "admin")
     }
 }
 
 function goBack(formState, updateFormState) {
     updateFormState("inputType", "name")
+}
+
+async function signup(formState, updateFormState) {
+    if (isValidEmail(formState.adminEmail) == false) {
+        updateFormState("adminEmailError", "Please enter a valid email")
+    } else if (isValidPassword(formState.adminPassword) == false) {
+        updateFormState("adminPasswordError", "Please enter a valid password")
+    } else if (formState.adminPassword !== formState.adminConfirmPassword) {
+        updateFormState("adminPasswordError", "Passwords do not match")
+        updateFormState("adminConfirmPasswordError", "Passwords do not match")
+    }
+}
+
+function isValidEmail(email) {
+    if (email.length == 0) {
+        return false
+    }
+
+    return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email)
+};
+
+function isValidPassword(pw) {
+
+    return pw.length >= 8;
+
 }
 
 export default SignUp
