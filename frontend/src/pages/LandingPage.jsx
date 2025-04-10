@@ -19,9 +19,9 @@ function LandingPage() {
                 </span>
 
                 <div className="w-full flex justify-start gap-5">
-                    <PrimaryButton className="basis-1/3" content={"Sign In"} />
+                    <PrimaryButton className="basis-1/3 rounded-md" content={"Sign In"} />
 
-                    <OutlineButton className="basis-1/3" content={"Sign Up"} onClick={() => signup(navigate)} />
+                    <OutlineButton className="basis-1/3 rounded-md" content={"Sign Up"} onClick={() => signup(navigate)} />
                 </div>
             </>
         )

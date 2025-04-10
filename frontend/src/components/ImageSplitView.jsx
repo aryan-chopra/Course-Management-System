@@ -1,8 +1,7 @@
 function ImageSplitView(props) {
-    console.log(props.children[0])
 
     return (
-        <div className={`p-32 w-screen h-screen max-w-full max-h-screen flex flex-row overflow-hidden ${props.className}`}>
+        <div className={`${props.className} p-32 w-screen h-screen max-w-full max-h-screen flex flex-row overflow-hidden`}>
             <div className="basis-1/3 flex flex-col gap-6 items-center justify-center">
                 {props.children}
             </div>
